@@ -100,8 +100,7 @@ If you're interested in developing additional features or want to run the projec
 For a comprehensive guide on how to use the Autoware Launch GUI, please refer to our demo video. In essence, the process involves:
 
 ## **Demo Video**
-
-[![Autoware Launch GUI Demo](https://github.com/leo-drive/autoware-build-gui/assets/36904941/83957879-608f-49e1-9348-00752e7aaf19)](https://youtu.be/iQEEct-pwpg)
+[![Autoware Launch GUI Demo](https://github-production-user-asset-6210df.s3.amazonaws.com/36904941/273592037-9bb7c83d-eb79-4991-a43c-16d1c5b2673d.png)](https://www.youtube.com/watch?v=iQEEct-pwpg&ab_channel=KhalilSelyan)
 
 1. Launching the app.
 2. Setting the path to the Autoware folder.
