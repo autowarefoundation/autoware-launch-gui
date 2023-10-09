@@ -1,0 +1,103 @@
+{
+  "build": {
+    "beforeDevCommand": "pnpm dev",
+    "beforeBuildCommand": "pnpm build",
+    "devPath": "http://localhost:1420",
+    "distDir": "../dist",
+    "withGlobalTauri": false
+  },
+  "package": {
+    "productName": "Autoware Launch GUI",
+    "version": "1.0.0"
+  },
+  "tauri": {
+    "bundle": {
+      "active": true,
+      "category": "DeveloperTool",
+      "copyright": "",
+      "deb": {
+        "depends": []
+      },
+      "externalBin": [],
+      "icon": ["icons/64x64-AWF.png", "icons/256x256-AWF.png"],
+      "identifier": "com.leodrive.ai",
+      "longDescription": "",
+      "macOS": {
+        "entitlements": null,
+        "exceptionDomain": "",
+        "frameworks": [],
+        "providerShortName": null,
+        "signingIdentity": null
+      },
+      "appimage": {
+        "bundleMediaFramework": false
+      },
+      "resources": [],
+      "shortDescription": "",
+      "targets": "all",
+      "windows": {
+        "certificateThumbprint": null,
+        "digestAlgorithm": "sha256",
+        "timestampUrl": "",
+        "nsis": {
+          "installerIcon": "./icons/icon.ico"
+        }
+      }
+    },
+    "security": {
+      "csp": null,
+      "assetProtocol": {
+        "enable": false,
+        "scope": {
+          "allow": ["$HOME/**/*", "$TEMP/**/*", "$HOME"],
+          "deny": []
+        }
+      },
+      "dangerousRemoteDomainIpcAccess": [
+        {
+          "scheme": "https",
+          "domain": "tauri.localhost",
+          "windows": ["main"],
+          "plugins": [
+            "app",
+            "shell",
+            "os",
+            "event",
+            "window",
+            "dialog",
+            "fs",
+            "path"
+          ]
+        }
+      ]
+    },
+    "windows": [
+      {
+        "fullscreen": false,
+        "title": "Splash Screen",
+        "center": true,
+        "resizable": false,
+        "decorations": false,
+        "transparent": true,
+        "width": 1200,
+        "height": 590,
+        "label": "splash",
+        "url": "splash.html",
+        "alwaysOnTop": true
+      },
+      {
+        "fullscreen": false,
+        "title": "Autoware Launch GUI",
+        "center": true,
+        "resizable": true,
+        "decorations": false,
+        "transparent": true,
+        "height": 840,
+        "width": 1200,
+        "label": "main",
+        "minHeight": 600,
+        "minWidth": 840
+      }
+    ]
+  }
+}
