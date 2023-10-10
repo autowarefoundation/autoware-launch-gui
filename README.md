@@ -68,6 +68,7 @@ Once Rust and Node.js are set up, you can proceed with the [Installation](#insta
 ### Using the .deb File
 
 For most users, the easiest way to get started is by downloading and installing the provided `.deb` file.
+It can be found on the releases for this repo at this link [Releases](https://github.com/leo-drive/autoware-launch-gui/releases/)
 
 ### For Developers
 
