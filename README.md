@@ -33,6 +33,7 @@ To run or develop the Autoware Build GUI, you'll need to have both Rust and Node
    ```bash
    rustc --version
    ```
+   *rustc 1.72.0 (5680fa18f 2023-08-23) is the one i'm currently on while developping this.*
 
 ### Installing Node.js
 
@@ -52,6 +53,7 @@ To run or develop the Autoware Build GUI, you'll need to have both Rust and Node
    ```bash
    node --version
    ```
+   *v16.20.0 is the one i'm currently on while developping this.*
 
 4. It's also recommended to install `pnpm` as it's not included:
 
