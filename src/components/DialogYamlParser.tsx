@@ -49,28 +49,62 @@ export function YamlArgsDialog({
   const initializeValues = (params: { [key: string]: any }) => {
     const initialValues = {
       input: {} as { [key: string]: string },
-      slider: {} as { [key: string]: number },
       checkbox: {} as { [key: string]: boolean },
+      integer: {} as { [key: string]: number },
+      double: {} as { [key: string]: number },
     };
 
     const traverseParams = (
       currentParams: { [key: string]: any },
       prefix: string = ""
     ) => {
-      Object.entries(currentParams).forEach(([key, value]) => {
-        if (isArrayRepresentation(value)) {
-          value = Object.values(value); // Convert the object to an array
-        }
+      Object.entries(currentParams).forEach(([key, valueObj]) => {
+        const value = valueObj.value;
         const fullKey = prefix ? `${prefix}.${key}` : key;
-        if (typeof value === "string") {
-          initialValues.input[fullKey] = value;
-        } else if (typeof value === "number") {
-          initialValues.slider[fullKey] = value;
-        } else if (typeof value === "boolean") {
-          initialValues.checkbox[fullKey] = value;
-        } else if (typeof value === "object" && value !== null) {
-          traverseParams(value, fullKey);
-        }
+        if (isArrayRepresentation(valueObj)) {
+          // This is an array representation
+          valueObj.forEach((item: any, index: number) => {
+            const arrayKey = `${fullKey}.${index}`;
+            switch (item.type) {
+              case "string":
+                initialValues.input[arrayKey] = item.value;
+                break;
+              case "integer":
+                initialValues.integer[arrayKey] = item.value;
+                break;
+              case "float":
+                initialValues.double[arrayKey] = item.value;
+                break;
+              case "boolean":
+                initialValues.checkbox[arrayKey] = item.value;
+                break;
+              default:
+                if (typeof item.value === "object" && item.value !== null) {
+                  traverseParams({ [arrayKey]: item.value });
+                }
+                break;
+            }
+          });
+        } else
+          switch (valueObj.type) {
+            case "string":
+              initialValues.input[fullKey] = value;
+              break;
+            case "integer":
+              initialValues.integer[fullKey] = value;
+              break;
+            case "float":
+              initialValues.double[fullKey] = value;
+              break;
+            case "boolean":
+              initialValues.checkbox[fullKey] = value;
+              break;
+            default:
+              if (typeof value === "object" && value !== null) {
+                traverseParams(value, fullKey);
+              }
+              break;
+          }
       });
     };
 
@@ -81,19 +115,25 @@ export function YamlArgsDialog({
 
   const {
     input: initialInputValues,
-    slider: initialSliderValues,
     checkbox: initialCheckboxValues,
+    integer: initialIntegerValues,
+    double: initialDoubleValues,
   } = initializeValues(params);
 
   const [inputValues, setInputValues] = useState<{ [key: string]: string }>(
     initialInputValues
   );
-  const [sliderValues, setSliderValues] = useState<{ [key: string]: number }>(
-    initialSliderValues
-  );
   const [checkboxValues, setCheckboxValues] = useState<{
     [key: string]: boolean;
   }>(initialCheckboxValues);
+
+  const [integerValues, setIntegerValues] = useState<{
+    [key: string]: number;
+  }>(initialIntegerValues);
+
+  const [doubleValues, setDoubleValues] = useState<{
+    [key: string]: number;
+  }>(initialDoubleValues);
 
   const [userEditedArgParams, setUserEditedArgParams] = useState<{
     [key: string]: any;
@@ -105,15 +145,51 @@ export function YamlArgsDialog({
     const keys = absFullKey.split(".");
     let current = yamlData;
 
-    for (let i = 0; i < keys.length - 1; i++) {
-      if (!current[keys[i]]) {
-        current[keys[i]] = {};
-      }
-      current = current[keys[i]];
+    // Check if the last part of the key is a number
+    const lastKey = keys[keys.length - 1];
+    if (!isNaN(Number(lastKey))) {
+      // Remove the last key since it's a number
+      keys.pop();
+    }
 
-      // if the current key is an array, we push an empty string to it
-      if (Array.isArray(current)) {
-        current.push("");
+    for (let i = 0; i < keys.length; i++) {
+      if (i === keys.length - 1) {
+        // We're at the target key
+        if (Array.isArray(current[keys[i]]) && current[keys[i]].length > 0) {
+          const firstItem = current[keys[i]][0];
+          let newItem;
+
+          switch (firstItem.type) {
+            case "integer":
+              newItem = { type: "integer", value: 0 };
+              break;
+            case "float":
+              newItem = { type: "float", value: 0.0 };
+              break;
+            case "boolean":
+              newItem = { type: "boolean", value: false };
+              break;
+            case "string":
+            default:
+              newItem = { type: "string", value: "" };
+              break;
+          }
+
+          current[keys[i]].push(newItem);
+        } else {
+          console.error(`Key path ${fullKey} is not an array or is empty.`);
+        }
+      } else {
+        // Navigate to the next level
+        current = current[keys[i]];
+        if (!current) {
+          console.error(
+            `Intermediate key path ${keys
+              .slice(0, i + 1)
+              .join(".")} does not exist in the YAML data.`
+          );
+          return;
+        }
       }
     }
 
@@ -126,27 +202,80 @@ export function YamlArgsDialog({
     const keys = absFullKey.split(".");
     let current = yamlData;
 
+    // Check if the last part of the key is a number
+    const lastKey = keys[keys.length - 1];
+
+    if (!isNaN(Number(lastKey))) {
+      // Remove the last key since it's a number
+      keys.pop();
+    }
+
     for (let i = 0; i < keys.length - 1; i++) {
       if (!current[keys[i]]) {
+        console.log(
+          `Key path ${keys.slice(0, i + 1).join(".")} does not exist.`
+        );
         return; // If the key doesn't exist, exit early
       }
       current = current[keys[i]];
     }
 
-    // Check if the current key is an array and remove the item at the specified index
-    if (Array.isArray(current)) {
-      current.splice(index, 1);
-    }
+    // remove item from current
+    current[keys[keys.length - 1]].splice(index, 1);
 
     setYamlData({ ...yamlData });
+
+    let updatedArgs = { ...userEditedArgParams };
+
+    // Iterate over all keys to ensure format consistency
+    Object.entries(updatedArgs["/**"].ros__parameters).forEach(
+      ([key, value]: any) => {
+        if (Array.isArray(value)) {
+          value.forEach((item, index) => {
+            if (
+              item.type === "float" &&
+              item.value % 1 === 0 &&
+              !String(item.value).endsWith(".0")
+            ) {
+              updatedArgs["/**"].ros__parameters[key][
+                index
+              ].value = `${item.value}.0`;
+            }
+          });
+        } else if (
+          value.type === "float" &&
+          value.value % 1 === 0 &&
+          !String(value.value).endsWith(".0")
+        ) {
+          updatedArgs["/**"].ros__parameters[key].value = `${value.value}.0`;
+        }
+      }
+    );
+
+    // Create a new object with just the values
+    const updatedValuesOnly = Object.fromEntries(
+      Object.entries(updatedArgs["/**"].ros__parameters).map(
+        ([key, value]: any) => {
+          if (Array.isArray(value)) {
+            return [key, value.map((item) => item.value)];
+          }
+          return [key, value.value];
+        }
+      )
+    );
+
+    updatedArgs["/**"].ros__parameters = updatedValuesOnly;
+
+    // Convert the userEditedArgParams to an array format for further processing
+    const updatedArgsArr = Object.keys(updatedArgs).map((key) => {
+      return { arg: key, value: updatedArgs[key] };
+    });
 
     // call the save_edits_yaml function
     await invoke("save_edits_yaml", {
       payload: {
         path,
-        newYamlArgs: Object.keys(userEditedArgParams).map((key) => {
-          return { arg: key, value: userEditedArgParams[key] };
-        }),
+        newYamlArgs: updatedArgsArr,
       },
     });
 
@@ -160,38 +289,103 @@ export function YamlArgsDialog({
 
   const handleEdit = useCallback(
     async (key: string) => {
-      const fullKeyPath = `/**.ros__parameters.${key}`;
+      const basePath = "/**.ros__parameters";
+      const fullKeyPath = `${basePath}.${key}`;
 
-      // Determine the value based on the key and type checks
+      const determineValue = (type: any, key: any) => {
+        switch (type) {
+          case "string":
+            return { type, value: inputValues[key] };
+          case "integer":
+            return { type, value: integerValues[key] };
+          case "float":
+            const floatValue = doubleValues[key];
+            return {
+              type,
+              value: floatValue % 1 === 0 ? `${floatValue}.0` : floatValue,
+            };
+          case "boolean":
+            return {
+              type,
+              value:
+                checkboxValues[key] !== undefined ? checkboxValues[key] : false,
+            };
+          default:
+            return null;
+        }
+      };
+
       let valueToUpdate;
-      if (
-        inputValues[key] !== undefined &&
-        typeof inputValues[key] === "string"
-      ) {
-        valueToUpdate = inputValues[key];
-      } else if (
-        sliderValues[key] !== undefined &&
-        typeof sliderValues[key] === "number" &&
-        !isNaN(sliderValues[key])
-      ) {
-        valueToUpdate = sliderValues[key];
-      } else if (
-        checkboxValues[key] !== undefined &&
-        typeof checkboxValues[key] === "boolean"
-      ) {
-        valueToUpdate = checkboxValues[key];
+      const arrayKeyMatch = key.match(/^(\w+)\.(\d+)$/);
+
+      if (arrayKeyMatch) {
+        const [, argName, index] = arrayKeyMatch;
+        const elementTypeInfo =
+          yamlData["/**"]["ros__parameters"][argName][index]?.type;
+        valueToUpdate = determineValue(elementTypeInfo, key);
       } else {
-        await message(`Invalid value or type for key: ${key}}`);
-        return; // Exit the function if the value or type is invalid
+        const typeInfo = yamlData["/**"]["ros__parameters"][key]?.type;
+        valueToUpdate = determineValue(typeInfo, key);
       }
 
-      // Update the userEditedArgParams state using the determined value
+      if (
+        !valueToUpdate ||
+        valueToUpdate.value == null ||
+        valueToUpdate.value === ""
+      ) {
+        message("Invalid value please check the type", {
+          title: "Error",
+          type: "error",
+        });
+        return;
+      }
+
       let updatedArgs = { ...userEditedArgParams };
       updatedArgs = setNestedProperty(updatedArgs, fullKeyPath, valueToUpdate);
 
+      // Iterate over all keys
+      Object.entries(updatedArgs["/**"].ros__parameters).forEach(
+        ([key, value]: any) => {
+          // Check if the value is an array
+          if (Array.isArray(value)) {
+            value.forEach((item, index) => {
+              if (
+                item.type === "float" &&
+                item.value % 1 === 0 &&
+                !String(item.value).endsWith(".0")
+              ) {
+                updatedArgs["/**"].ros__parameters[key][
+                  index
+                ].value = `${item.value}.0`;
+              }
+            });
+          } else if (
+            value.type === "float" &&
+            value.value % 1 === 0 &&
+            !String(value.value).endsWith(".0")
+          ) {
+            updatedArgs["/**"].ros__parameters[key].value = `${value.value}.0`;
+          }
+        }
+      );
+
+      // Create a new object with just the values
+      const updatedValuesOnly = Object.fromEntries(
+        Object.entries(updatedArgs["/**"].ros__parameters).map(
+          ([key, value]: any) => {
+            if (Array.isArray(value)) {
+              return [key, value.map((item) => item.value)];
+            }
+            return [key, value.value];
+          }
+        )
+      );
+
+      updatedArgs["/**"].ros__parameters = updatedValuesOnly;
+
       setUserEditedArgParams(updatedArgs);
 
-      // Convert the userEditedArgParams to an array format
+      // Convert the userEditedArgParams to an array format for further processing
       const updatedArgsArr = Object.keys(updatedArgs).map((key) => {
         return { arg: key, value: updatedArgs[key] };
       });
@@ -204,8 +398,6 @@ export function YamlArgsDialog({
         },
       });
 
-      // Reset the config path so that the config is reloaded
-      // but put it back to the original path after .5 second so that the user can continue editing
       setConfigPath("");
       setTimeout(() => {
         setConfigPath(path);
@@ -213,81 +405,92 @@ export function YamlArgsDialog({
     },
     [
       inputValues,
-      sliderValues,
       checkboxValues,
+      integerValues,
+      doubleValues,
       path,
       setConfigPath,
       userEditedArgParams,
+      yamlData,
     ]
   );
 
   useEffect(() => {
     const {
       input: updatedInputValues,
-      slider: updatedSliderValues,
       checkbox: updatedCheckboxValues,
+      integer: updatedIntegerValues,
+      double: updatedDoubleValues,
     } = initializeValues(params);
 
     setInputValues(updatedInputValues);
-    setSliderValues(updatedSliderValues);
     setCheckboxValues(updatedCheckboxValues);
+    setIntegerValues(updatedIntegerValues);
+    setDoubleValues(updatedDoubleValues);
   }, [yamlData]);
 
-  const renderComponentBasedOnType = (fullKey: string, value: any) => {
-    if (typeof value === "string") {
-      return (
-        <Input
-          id={fullKey}
-          defaultValue={inputValues[fullKey] || ""}
-          className="col-span-3"
-          onChange={(e) =>
-            setInputValues((prev) => ({ ...prev, [fullKey]: e.target.value }))
-          }
-        />
-      );
-    } else if (typeof value === "number") {
-      return (
-        /*      <Slider
-          id={fullKey}
-          defaultValue={[sliderValues[fullKey]]}
-          min={value * -10}
-          max={value * 10}
-          step={0.1}
-          className="col-span-3"
-          onValueChange={(value) =>
-            setSliderValues((prev) => ({ ...prev, [fullKey]: value[0] }))
-          }
-        /> */
-        <Input
-          id={fullKey}
-          defaultValue={sliderValues[fullKey] || ""}
-          onChange={(e) => {
-            setSliderValues((prev) => ({
-              ...prev,
-              [fullKey]: parseFloat(e.target.value),
-            }));
-          }}
-        />
-      );
-    } else if (typeof value === "boolean") {
-      return (
-        <div className="flex items-center gap-2">
-          <Checkbox
+  const renderComponentBasedOnType = (fullKey: string, valueObj: any) => {
+    switch (valueObj.type) {
+      case "string":
+        return (
+          <Input
             id={fullKey}
-            defaultChecked={checkboxValues[fullKey] || false}
+            defaultValue={inputValues[fullKey] || ""}
             className="col-span-3"
-            onCheckedChange={(value) =>
-              setCheckboxValues((prev) => ({
-                ...prev,
-                [fullKey]: value as boolean,
-              }))
+            onChange={(e) =>
+              setInputValues((prev) => ({ ...prev, [fullKey]: e.target.value }))
             }
           />
-          <Label htmlFor={fullKey} className="capitalize">
-            {(checkboxValues[fullKey] as boolean).toString()}
-          </Label>
-        </div>
-      );
+        );
+      case "integer":
+        return (
+          <Input
+            id={fullKey}
+            defaultValue={integerValues[fullKey]?.toString() || ""}
+            onChange={(e) => {
+              setIntegerValues((prev) => ({
+                ...prev,
+                [fullKey]: parseInt(e.target.value, 10),
+              }));
+            }}
+          />
+        );
+      case "float":
+        return (
+          <Input
+            id={fullKey}
+            defaultValue={doubleValues[fullKey]?.toString() || ""}
+            onChange={(e) => {
+              setDoubleValues((prev) => ({
+                ...prev,
+                [fullKey]: parseFloat(e.target.value),
+              }));
+            }}
+          />
+        );
+      case "boolean":
+        const isChecked = checkboxValues[fullKey];
+
+        return (
+          <div className="flex items-center gap-2">
+            <Checkbox
+              id={fullKey}
+              defaultChecked={isChecked || false}
+              className="col-span-3"
+              onCheckedChange={(value) =>
+                setCheckboxValues((prev) => ({
+                  ...prev,
+                  [fullKey]: value as boolean,
+                }))
+              }
+            />
+            <Label htmlFor={fullKey} className="capitalize">
+              {isChecked !== undefined ? isChecked.toString() : ""}
+            </Label>
+          </div>
+        );
+      default:
+        return null;
     }
   };
 
@@ -372,7 +575,13 @@ export function YamlArgsDialog({
 
   const renderAllYamlArgs = () => {
     return Object.keys(params).map((key) => {
-      if (typeof params[key] === "object" && params[key] !== null) {
+      if (
+        typeof params[key] === "object" &&
+        params[key] !== null &&
+        // this object isn't a {type: "string", value: "some string"} object
+        !params[key].type &&
+        !params[key].value
+      ) {
         return (
           <div className="flex flex-col gap-2" key={key}>
             <h3 className="text-lg font-bold">{key}</h3>

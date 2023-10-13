@@ -15,6 +15,7 @@ mod components; // Assuming autoware_manager.rs is in the same directory as main
 use components::autoware_manager::{
     autoware_installed_packages, kill_autoware_process, launch_autoware,
 };
+use components::json_profile::{load_profile, save_profile};
 use components::xml_parse::parse_and_send_xml;
 use components::yaml_edit::{find_yaml_files, parse_yaml, save_edits_yaml};
 
@@ -209,7 +210,9 @@ async fn main() {
             autoware_installed_packages,
             save_edits_yaml,
             find_yaml_files,
-            parse_yaml
+            parse_yaml,
+            save_profile,
+            load_profile
         ])
         .setup(move |app| {
             let app_for_async = app.app_handle().clone();
