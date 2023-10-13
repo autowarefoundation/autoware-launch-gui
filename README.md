@@ -16,7 +16,7 @@ Autoware Launch GUI is a Tauri / NextJS application designed to simplify the pro
 
 ## Dependencies
 
-To run or develop the Autoware Build GUI, you'll need to have both Rust and Node.js installed on your system.
+To run or develop the Autoware Launch GUI, you'll need to have both Rust and Node.js installed on your system.
 
 ### Installing Rust
 
@@ -119,14 +119,15 @@ For a comprehensive guide on how to use the Autoware Launch GUI, please refer to
 - [x] Kill Autoware Processes
 - [x] Edit Config Params YAML Files
 - [x] View Current CPU/Memory Usage
+- [x] Save and Load Most used Autoware Launch Profiles 
 
 ## Contributing
 
-We welcome contributions from the community! If you're interested in enhancing the Autoware Build GUI, please follow the installation instructions for developers and feel free to submit pull requests.
+We welcome contributions from the community! If you're interested in enhancing the Autoware Launch GUI, please follow the installation instructions for developers and feel free to submit pull requests.
 
 ## Author
 
-**Khalil Selyan** - Creator and maintainer of Autoware Build GUI.
+**Khalil Selyan** - Creator and maintainer of Autoware Launch GUI.
 
 - **GitHub**: <https://github.com/khalilselyan>
 - **LinkedIn**: <https://linkedin.com/in/khalilselyan>
