@@ -56,7 +56,9 @@ export function AboutDialog() {
               <span
                 className="cursor-pointer text-blue-500"
                 onClick={() =>
-                  open("https://github.com/agmmnn/tauri-ui/releases/tag/v0.2.0")
+                  open(
+                    "https://github.com/leo-drive/autoware-launch-gui/releases/"
+                  )
                 }
               >
                 release notes
@@ -82,11 +84,13 @@ export function AboutDialog() {
         <div className="mr-auto flex flex-row gap-2">
           <HomeIcon
             className="h-5 w-5 cursor-pointer transition hover:text-slate-300"
-            onClick={() => open("https://github.com/agmmnn/tauri-ui")}
+            onClick={() => open("https://autoware.org/")}
           />
           <GithubIcon
             className="h-5 w-5 cursor-pointer transition hover:text-slate-300 "
-            onClick={() => open("https://github.com/agmmnn/tauri-ui")}
+            onClick={() =>
+              open("https://github.com/leo-drive/autoware-launch-gui")
+            }
           />
         </div>
 
