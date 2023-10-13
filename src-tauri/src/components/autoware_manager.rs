@@ -58,7 +58,6 @@ pub fn launch_autoware(
         let main_pid = child.id() as i32;
         {
             let mut pids_lock = AUTOWARE_PIDS.lock().unwrap();
-            println!("length of pids before pushing: {}", pids_lock.len());
             pids_lock.push(main_pid);
         }
 
@@ -176,7 +175,7 @@ pub fn kill_autoware_process(window: tauri::Window<Wry>) -> Result<(), String> {
 
             // extra check to make sure the pid is not 0
             if pid == 0 {
-                eprintln!("The pid is 0");
+                eprintln!("There is no Autoware process running");
                 return;
             } else {
                 println!("The pid is {}", pid);
@@ -206,11 +205,14 @@ pub fn autoware_installed_packages(autoware_path: String) -> Result<Vec<String>,
     let packages = std::fs::read_dir(format!("{}/install", autoware_path))
         .map_err(|e| e.to_string())?
         .filter_map(|entry| {
-            entry
-                .ok()
-                .and_then(|e| e.file_name().into_string().ok())
-                .filter(|name| !name.starts_with('.'))
+            let entry = entry.ok()?;
+            if entry.file_type().ok()?.is_dir() {
+                entry.file_name().into_string().ok()
+            } else {
+                None
+            }
         })
         .collect::<Vec<String>>();
+
     Ok(packages)
 }
