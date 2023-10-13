@@ -1,34 +1,32 @@
 import { atom } from "jotai";
-import { atomWithStorage, createJSONStorage } from "jotai/utils";
+import { atomWithStorage } from "jotai/utils";
 
 import { ElementData } from "@/components/Tree";
 
-const storage = createJSONStorage(() => sessionStorage);
-
-export const mapScriptPathAtom = atomWithStorage<string | null>(
-  "mapScriptPath",
-  null
-);
-export const sensingScriptPathAtom = atomWithStorage<string | null>(
-  "sensingScriptPath",
-  null
-);
-export const localizationScriptPathAtom = atomWithStorage<string | null>(
-  "localizationScriptPath",
-  null
-);
-export const detectionScriptPathAtom = atomWithStorage<string | null>(
-  "detectionScriptPath",
-  null
-);
-export const missionPlanningScriptPathAtom = atomWithStorage<string | null>(
-  "missionPlanningScriptPath",
-  null
-);
-export const motionPlanningScriptPathAtom = atomWithStorage<string | null>(
-  "motionPlanningScriptPath",
-  null
-);
+// export const mapScriptPathAtom = atomWithStorage<string | null>(
+//   "mapScriptPath",
+//   null
+// );
+// export const sensingScriptPathAtom = atomWithStorage<string | null>(
+//   "sensingScriptPath",
+//   null
+// );
+// export const localizationScriptPathAtom = atomWithStorage<string | null>(
+//   "localizationScriptPath",
+//   null
+// );
+// export const detectionScriptPathAtom = atomWithStorage<string | null>(
+//   "detectionScriptPath",
+//   null
+// );
+// export const missionPlanningScriptPathAtom = atomWithStorage<string | null>(
+//   "missionPlanningScriptPath",
+//   null
+// );
+// export const motionPlanningScriptPathAtom = atomWithStorage<string | null>(
+//   "motionPlanningScriptPath",
+//   null
+// );
 
 export const autowareFolderPathAtom = atomWithStorage<string | null>(
   "autowareFolderPathLaunchGUI",
@@ -48,11 +46,11 @@ export const topProcessesAtom = atom<{ name: string; cpu_usage: number }[]>([
 ]);
 
 export const parsedLaunchFilesAtom = atomWithStorage<ElementData[]>(
-  "parsedLaunchFiles",
+  "parsedLaunchFilesLaunchGUI",
   []
 );
 export const parsedLaunchFilePathAtom = atomWithStorage<string>(
-  "parsedLaunchFilePath",
+  "parsedLaunchFilePathLaunchGUI",
   ""
 );
 
@@ -72,9 +70,15 @@ export const launchLogsInfoAtom = atom<string[]>([]);
 export const launchLogsWarnAtom = atom<string[]>([]);
 export const launchLogsErrorAtom = atom<string[]>([]);
 export const launchLogsDebugAtom = atom<string[]>([]);
-export const launchLogsComponentAtom = atom<string[]>([]);
-
+export const launchLogsComponentAtom = atom<{ name: string; logs: string[] }[]>(
+  []
+);
 export const installedPackagesAtom = atomWithStorage<string[]>(
   "installedPackagesLaunchGUI",
+  []
+);
+
+export const lastSavedLoadedProfileJSONPathsAtom = atomWithStorage<string[]>(
+  "lastSavedLoadedProfileJSONPathsLaunchGUI",
   []
 );

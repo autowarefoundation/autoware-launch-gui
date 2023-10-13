@@ -19,6 +19,7 @@ import {
 
 import { AutowareLaunchDialog } from "../AutowareLaunchDialog";
 import { EditArgsDialog } from "../EditArgsDialog";
+import { ProfileSetup } from "../ProfileSetup";
 import type { ElementData } from "../Tree";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
@@ -130,7 +131,6 @@ const Launch = () => {
   }[] = [];
 
   const walkTreeItems = (items: ElementData[] | ElementData) => {
-    // console.log("are we walking?");
     if (items instanceof Array) {
       for (let i = 0; i < items.length; i++) {
         if (items[i]!.name === "arg") {
@@ -424,6 +424,7 @@ const Launch = () => {
 
     // const fileNameWithExtension = file.path.split("/").pop();
     setParsedFilePath(file.path);
+    setUserEditedArgs([]);
   }, [autowarePath]);
 
   return (
@@ -483,6 +484,9 @@ const Launch = () => {
         >
           Autoware Path
         </Button>
+        <div className="ml-auto flex items-center gap-2">
+          <ProfileSetup />
+        </div>
       </div>
       {/* <Tree data={elements} /> */}
       <div className="flex w-full flex-row gap-4">
