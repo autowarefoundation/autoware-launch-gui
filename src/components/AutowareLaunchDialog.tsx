@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/tauri";
 import { useAtom } from "jotai";
 
@@ -22,6 +22,15 @@ import {
 } from "@/app/jotai/atoms";
 
 import { Button } from "./ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "./ui/select";
 import { Tabs, TabsList, TabsTrigger } from "./ui/tabs";
 
 interface AutowareLaunchDialog extends React.HTMLAttributes<HTMLDivElement> {}
@@ -42,6 +51,11 @@ export function AutowareLaunchDialog(props: AutowareLaunchDialog) {
     autowareFolderPathAtom
   );
   const [packageList, setPackageList] = useAtom(installedPackagesAtom);
+  const [selectedPackage, setSelectedPackage] = useState("");
+
+  const handlePackageSelect = useCallback((pkg: string) => {
+    setSelectedPackage(pkg);
+  }, []);
 
   useEffect(() => {
     async function init() {
@@ -100,15 +114,29 @@ export function AutowareLaunchDialog(props: AutowareLaunchDialog) {
 
           // if logs includes one of the package names, add it to the launchLogsComponent state while taking out the first 50 if it's bigger than 100
           if (folders.some((name) => logs.includes(name))) {
+            // we add them according to their names, so we can easily see which package is causing the error
+            // launchcomponentlogs is an array of objects, each object has a name and an array of logs
             setLaunchLogsComponent((prev) => {
-              if (prev.length > 100) {
-                return [...prev.slice(50), logs];
+              const newLogs = [...prev];
+              const index = newLogs.findIndex((log) => logs.includes(log.name));
+              if (index !== -1) {
+                if (newLogs[index].logs.length > 100) {
+                  newLogs[index].logs = [
+                    ...newLogs[index].logs.slice(50),
+                    logs,
+                  ];
+                } else {
+                  newLogs[index].logs = [...newLogs[index].logs, logs];
+                }
               } else {
-                return [...prev, logs];
+                newLogs.push({
+                  name: folders.find((name) => logs.includes(name)) ?? "",
+                  logs: [logs],
+                });
               }
+              return newLogs;
             });
           }
-
           logDivRef.current?.scrollTo(0, logDivRef.current?.scrollHeight);
         }
       );
@@ -160,18 +188,22 @@ export function AutowareLaunchDialog(props: AutowareLaunchDialog) {
               setCurrentTab(value);
             }}
           >
-            <TabsList
-              className="
-            sticky top-0
-            "
-            >
+            <TabsList className="sticky top-0">
               {tabTitles.map((title) => (
                 <TabsTrigger key={title} value={title.toLowerCase()}>
                   {title}
                 </TabsTrigger>
               ))}
             </TabsList>
-            <div className="flex flex-col gap-4 overflow-y-auto break-words p-4">
+            {currentTab === "component" && (
+              <div className="sticky left-0 top-10 z-50 flex items-center bg-primary-foreground p-2">
+                <PackageDropdown
+                  packages={packageList}
+                  onPackageSelect={handlePackageSelect}
+                />
+              </div>
+            )}
+            <div className=" flex flex-col gap-4 overflow-y-auto break-words p-4">
               {currentTab === "info" &&
                 launchLogsInfo.map((log, index) => (
                   <div key={index} className="">
@@ -196,12 +228,18 @@ export function AutowareLaunchDialog(props: AutowareLaunchDialog) {
                     {log}
                   </div>
                 ))}
-              {currentTab === "component" &&
-                launchLogsComponent.map((log, index) => (
-                  <div key={index} className="text-blue-500">
-                    {log}
-                  </div>
-                ))}
+              {currentTab === "component" && (
+                <div className="flex flex-col overflow-y-auto break-words p-4">
+                  {/* Display logs for the selected package */}
+                  {launchLogsComponent
+                    .filter((log) => log.name === selectedPackage)
+                    .map((logObj, index) => (
+                      <div key={index} className="">
+                        {logObj.logs.join("\n")}
+                      </div>
+                    ))}
+                </div>
+              )}
             </div>
           </Tabs>
         </div>
@@ -209,3 +247,49 @@ export function AutowareLaunchDialog(props: AutowareLaunchDialog) {
     </Dialog>
   );
 }
+
+const PackageDropdown = memo(function PackageDropdown({
+  packages,
+  onPackageSelect,
+}: {
+  packages: string[];
+  onPackageSelect: (selectedPackage: string) => void;
+}) {
+  const [selectedPackage, setSelectedPackage] = useState("");
+
+  const handlePackageSelect = useCallback(
+    (value: string) => {
+      const pkg = value;
+      console.log(pkg);
+      setSelectedPackage(pkg);
+      onPackageSelect(pkg);
+    },
+    [onPackageSelect]
+  );
+
+  return (
+    <Select onValueChange={handlePackageSelect}>
+      <SelectTrigger className="w-fit">
+        <SelectValue placeholder={selectedPackage || "Select package..."} />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectGroup
+          style={{
+            maxHeight: "12rem",
+            overflowY: "auto",
+            position: "relative",
+          }}
+        >
+          <SelectLabel>Packages</SelectLabel>
+          {packages
+            .sort((a, b) => a.localeCompare(b))
+            .map((pkg: string) => (
+              <SelectItem key={pkg} value={pkg}>
+                {pkg}
+              </SelectItem>
+            ))}
+        </SelectGroup>
+      </SelectContent>
+    </Select>
+  );
+});
