@@ -24,6 +24,9 @@ export default function MyApp({ children }: ExamplesLayoutProps) {
       if (e.ctrlKey && e.key === "r") {
         e.preventDefault();
         window.location.reload();
+      } else if (e.ctrlKey && e.key === "q") {
+        e.preventDefault();
+        window.close();
       }
     };
     window.addEventListener("keydown", handleKeyDown);
@@ -32,17 +35,21 @@ export default function MyApp({ children }: ExamplesLayoutProps) {
     };
   }, []);
   return (
-    <html lang="en" suppressHydrationWarning className="overflow-clip bg-black">
+    <html
+      lang="en"
+      suppressHydrationWarning
+      className="overflow-clip rounded-xl bg-black"
+    >
       <head />
       <body className="overflow-clip bg-transparent font-sans antialiased scrollbar-none">
         <Provider>
           <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-            <div className="min-h-screen overflow-clip">
+            <div className="max-h-screen overflow-clip rounded-lg border-2">
               <Menu />
               <Toaster />
               <div
                 className={cn(
-                  "h-screen overflow-auto border-t bg-background pb-8",
+                  "h-screen overflow-auto border-t-2 bg-background pb-8",
                   // "scrollbar-none",
                   "scrollbar-thin scrollbar-track-transparent scrollbar-thumb-accent scrollbar-thumb-rounded-md"
                 )}
