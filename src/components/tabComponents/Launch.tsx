@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/tauri";
 import { message, open } from "@tauri-apps/plugin-dialog";
@@ -6,6 +8,8 @@ import { useAtom } from "jotai";
 import {
   autowareFolderPathAtom,
   autowareProcessesAtom,
+  launchLogsAllAtom,
+  launchLogsComponentAtom,
   launchLogsDebugAtom,
   launchLogsErrorAtom,
   launchLogsInfoAtom,
@@ -17,6 +21,7 @@ import {
   userEditedArgsAtom,
 } from "@/app/jotai/atoms";
 
+import AutowareFolderSetup from "../AutowareFolderSetup";
 import { AutowareLaunchDialog } from "../AutowareLaunchDialog";
 import { EditArgsDialog } from "../EditArgsDialog";
 import { ProfileSetup } from "../ProfileSetup";
@@ -32,9 +37,6 @@ const Launch = () => {
   const [elements, setElements] = useAtom(parsedLaunchFilesAtom);
   const [_launchFilePath, _setLaunchFilePath] = useAtom(
     parsedLaunchFilePathAtom
-  );
-  const [autowareFolderPath, setAutowareFolderPath] = useAtom(
-    autowareFolderPathAtom
   );
   const { toast } = useToast();
 
@@ -80,9 +82,9 @@ const Launch = () => {
         "package-not-found",
         () => {
           toast({
-            title: "Package Not Found",
+            title: "Caught an Exception",
             description:
-              "Package not found, check the values for your arguments",
+              "Exception hit, please check the error logs or try running the app from the terminal `autoware-launch-gui`",
             variant: "destructive",
           });
         }
@@ -280,11 +282,14 @@ const Launch = () => {
   //   setUserEditedArgs(argsFromCommand);
   // }, [editableCommand]);
 
+  const [_launchLogsAll, setLaunchLogsAll] = useAtom(launchLogsAllAtom);
   const [_launchLogsInfo, setLaunchLogsInfo] = useAtom(launchLogsInfoAtom);
   const [_launchLogsWarn, setLaunchLogsWarn] = useAtom(launchLogsWarnAtom);
   const [_launchLogsError, setLaunchLogsError] = useAtom(launchLogsErrorAtom);
   const [_launchLogsDebug, setLaunchLogsDebug] = useAtom(launchLogsDebugAtom);
-
+  const [_launchLogsComponent, setLaunchLogsComponent] = useAtom(
+    launchLogsComponentAtom
+  );
   const handleLaunchAutoware = useCallback(async () => {
     if (!autowarePath) {
       message("Please select autoware folder path");
@@ -375,10 +380,12 @@ const Launch = () => {
       // and we can launch autoware
       if (mapFileAttributesValuesFound.length === 2) {
         // reset the launch logs
+        setLaunchLogsAll([]);
         setLaunchLogsInfo([]);
         setLaunchLogsWarn([]);
         setLaunchLogsError([]);
         setLaunchLogsDebug([]);
+        setLaunchLogsComponent([]);
 
         await invoke("launch_autoware", {
           payload: {
@@ -412,8 +419,10 @@ const Launch = () => {
       ],
       title: "Select A Launch File",
     });
-    if (!file) {
+    if (!file && !parsedFilePath) {
       message("Please select a launch file");
+    }
+    if (!file) {
       return;
     }
     await invoke("parse_and_send_xml", {
@@ -428,7 +437,7 @@ const Launch = () => {
   }, [autowarePath]);
 
   return (
-    <div className="flex h-full flex-1 flex-col justify-between gap-4">
+    <div className="flex h-full w-full flex-col gap-4">
       <div className="flex flex-row gap-4">
         <AutowareLaunchDialog />
         <Button
@@ -470,20 +479,9 @@ const Launch = () => {
         >
           Kill Autoware
         </Button>
-        <Button
-          onClick={async () => {
-            const folder = await open({
-              directory: true,
-              multiple: false,
-              title: "Select Autoware Root Folder",
-            });
 
-            setAutowareFolderPath(folder as string);
-          }}
-          className={"ml-8 w-fit transition-all duration-300"}
-        >
-          Autoware Path
-        </Button>
+        <AutowareFolderSetup />
+
         <div className="ml-auto flex items-center gap-2">
           <ProfileSetup />
         </div>
@@ -491,9 +489,11 @@ const Launch = () => {
       {/* <Tree data={elements} /> */}
       <div className="flex w-full flex-row gap-4">
         <div className="flex w-full flex-col gap-4">
-          <h1 className="text-lg font-semibold">Parameters</h1>
+          <h1 className="text-lg font-semibold">
+            {parsedFilePath.split("/").pop()?.split(".")[0]} parameters
+          </h1>
           {args.length > 0 && (
-            <div className="flex h-44 w-full flex-col gap-2 overflow-y-auto rounded-lg border p-2">
+            <div className="flex h-60 w-full flex-col gap-2 overflow-y-auto rounded-lg border p-2">
               {args.map((arg, idx) => (
                 <div
                   key={arg.arg + idx}
@@ -528,7 +528,7 @@ const Launch = () => {
           <span className="font-semibold">
             Arguments added to launch command
           </span>
-          <div className="flex h-44 w-full flex-col gap-2 overflow-y-auto rounded-lg p-2">
+          <div className="flex h-60 w-full flex-col gap-2 overflow-y-auto rounded-lg p-2">
             {userEditedArgs.map((arg, idx) => (
               <div
                 key={arg.arg + idx}
