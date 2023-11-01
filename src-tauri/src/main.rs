@@ -13,9 +13,15 @@ use tokio::time::sleep;
 mod components; // Assuming autoware_manager.rs is in the same directory as main.rs
 
 use components::autoware_manager::{
-    autoware_installed_packages, kill_autoware_process, launch_autoware,
+    autoware_installed_packages, get_topics, kill_autoware_process, launch_autoware,
 };
 use components::json_profile::{load_profile, save_profile};
+use components::ros2_cmd_manager::{
+    kill_bag_record, kill_topic_echo, start_bag_record, start_topic_echo,
+};
+use components::rosbag_manager::{
+    get_rosbag_info, play_rosbag, set_rosbag_playback_rate, stop_rosbag_play, toggle_pause_state,
+};
 use components::xml_parse::parse_and_send_xml;
 use components::yaml_edit::{find_yaml_files, parse_yaml, save_edits_yaml};
 
@@ -212,7 +218,17 @@ async fn main() {
             find_yaml_files,
             parse_yaml,
             save_profile,
-            load_profile
+            load_profile,
+            play_rosbag,
+            toggle_pause_state,
+            stop_rosbag_play,
+            set_rosbag_playback_rate,
+            get_rosbag_info,
+            get_topics,
+            start_topic_echo,
+            kill_topic_echo,
+            start_bag_record,
+            kill_bag_record,
         ])
         .setup(move |app| {
             let app_for_async = app.app_handle().clone();
