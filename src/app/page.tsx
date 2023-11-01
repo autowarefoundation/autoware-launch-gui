@@ -5,7 +5,6 @@ import dynamic from "next/dynamic";
 import { invoke } from "@tauri-apps/api/tauri";
 import { useAtom } from "jotai";
 
-// import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   autowareFolderPathAtom,
   autowareProcessesAtom,
@@ -13,24 +12,29 @@ import {
   cpuUsageAtom,
   memoryUsageAtom,
   memoryUsagePercentageAtom,
+  tabAtom,
   topProcessesAtom,
 } from "@/app/jotai/atoms";
 
-const CPUMemUsage = dynamic(
-  () => import("@/components/tabComponents/CPUMemUsage"),
+const LaunchMainEntry = dynamic(
+  () => import("@/components/tabComponents/LaunchMainEntry"),
+  {
+    ssr: false,
+  }
+);
+const RosbagPlayer = dynamic(
+  () => import("@/components/tabComponents/RosbagPlayer"),
   {
     ssr: false,
   }
 );
 
-// const tabTitles = ["Quick Start", "Setup"];
-// type TabContentComponent = React.ComponentType<any> | string;
-
-// const tabContentComponentsMapping: Record<string, TabContentComponent> = {
-//   "Quick Start": Quickstart,
-//   Setup: Setup,
-//   Map: Map,
-// };
+const TopicsBagRecord = dynamic(
+  () => import("@/components/tabComponents/TopicsBagRecord"),
+  {
+    ssr: false,
+  }
+);
 
 export default function App() {
   const [autowareFolderPath, setAutowareFolderPath] = useAtom(
@@ -89,49 +93,13 @@ export default function App() {
     }, 1000);
     return () => clearInterval(interval);
   }, [autowareFolderPath]);
+  const [tab] = useAtom(tabAtom);
 
   return (
     <div className="relative flex h-full w-full select-none justify-between p-4">
-      <CPUMemUsage />
+      {tab === "launch" ? <LaunchMainEntry /> : null}
+      {tab === "rosbag" ? <RosbagPlayer /> : null}
+      {tab === "topics" ? <TopicsBagRecord /> : null}
     </div>
   );
 }
-
-// const TabContentComponentsMappingComponent = () => {
-//   const [autowareFolderPath, setAutowareFolderPath] = useAtom(
-//     autowareFolderPathAtom
-//   );
-//   const [currentTab, setCurrentTab] = React.useState(
-//     tabTitles[0].toLowerCase()
-//   );
-//   return (
-//     <Tabs
-//       defaultValue={tabTitles[0].toLowerCase()}
-//       className="w-full"
-//       onValueChange={(value) => {
-//         setCurrentTab(value);
-//       }}
-//     >
-//       {/* last item pushed away from the rest css */}
-//       <TabsList>
-//         {tabTitles.map((title) => (
-//           <TabsTrigger
-//             disabled={title !== "Quick Start" && !autowareFolderPath}
-//             key={title}
-//             value={title.toLowerCase()}
-//           >
-//             {title}
-//           </TabsTrigger>
-//         ))}
-//       </TabsList>
-
-//       <div className="p-4 pb-12">
-//         {tabTitles.map((title) => (
-//           <TabsContent key={title} value={title.toLowerCase()}>
-//             {React.createElement(tabContentComponentsMapping[title])}
-//           </TabsContent>
-//         ))}
-//       </div>
-//     </Tabs>
-//   );
-// };

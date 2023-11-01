@@ -1,3 +1,5 @@
+"use client";
+
 import React from "react";
 import { invoke } from "@tauri-apps/api/tauri";
 import { useAtom } from "jotai";
@@ -110,7 +112,7 @@ const YAMLEdit = () => {
   }, [autowareFolderPath]);
 
   return (
-    <div className="flex h-full flex-col items-start gap-4">
+    <div className="flex flex-col items-start gap-4">
       <div className="flex w-full items-center gap-4 text-xl font-medium">
         {parsedConfigFolderStructure ? (
           <DropDownYaml

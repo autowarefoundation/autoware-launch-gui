@@ -1,5 +1,6 @@
 "use client";
 
+import { useRef } from "react";
 import { FileText, Folder } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -17,6 +18,13 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import type { FolderStructure } from "@/components/tabComponents/YamlEdit";
+
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "./ui/tooltip";
 
 export function DropDownYaml({
   folderStructure,
@@ -74,13 +82,33 @@ export function DropDownYaml({
     return items;
   };
 
+  const triggerRef = useRef<HTMLButtonElement>(null);
+
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button className="w-fit p-2" variant="outline">
-          Select Config File
-        </Button>
-      </DropdownMenuTrigger>
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger>
+            <DropdownMenuTrigger asChild ref={triggerRef}>
+              <Button
+                onClick={() => {
+                  triggerRef.current?.click();
+                }}
+                className="w-fit p-2"
+                variant="outline"
+              >
+                Select Config File
+              </Button>
+            </DropdownMenuTrigger>
+          </TooltipTrigger>
+          <TooltipContent>
+            <span className="font-mono text-sm">
+              Select YAML config files from
+              /src/launcher/autoware_launch/autoware_launch/config to edit
+            </span>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
       <DropdownMenuContent className="ml-8 p-4">
         <DropdownMenuLabel>Select a YAML file</DropdownMenuLabel>
         <DropdownMenuSeparator />

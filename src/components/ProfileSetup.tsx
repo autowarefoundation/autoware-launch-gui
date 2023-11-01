@@ -1,7 +1,8 @@
+"use client";
+
 import { useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/tauri";
 import { message, open, save } from "@tauri-apps/plugin-dialog";
-import { readTextFile } from "@tauri-apps/plugin-fs";
 import { useAtom } from "jotai";
 import { z } from "zod";
 
@@ -16,9 +17,17 @@ import {
   lastSavedLoadedProfileJSONPathsAtom,
   parsedLaunchFilePathAtom,
   userEditedArgsAtom,
+  userEditedBagPlayFlagsAtom,
+  userEditedBagRecordFlagsAtom,
 } from "@/app/jotai/atoms";
 
 import { Label } from "./ui/label";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "./ui/tooltip";
 
 const ProfileDataSchema = z.object({
   autowarePath: z.string(),
@@ -27,6 +36,18 @@ const ProfileDataSchema = z.object({
     z.object({
       arg: z.string(),
       value: z.string(),
+    })
+  ),
+  userEditedBagPlayArgs: z.array(
+    z.object({
+      arg: z.string(),
+      value: z.union([z.string(), z.boolean(), z.number()]),
+    })
+  ),
+  userEditedBagRecordArgs: z.array(
+    z.object({
+      arg: z.string(),
+      value: z.union([z.string(), z.boolean(), z.number()]),
     })
   ),
 });
@@ -40,6 +61,12 @@ export function ProfileSetup() {
   );
 
   const [userEditedArgs, _setUserEditedArgs] = useAtom(userEditedArgsAtom);
+  const [userEditedBagPlayArgs, _setUserEditedBagPlayArgs] = useAtom(
+    userEditedBagPlayFlagsAtom
+  );
+  const [userEditedBagRecordArgs, _setUserEditedBagRecordArgs] = useAtom(
+    userEditedBagRecordFlagsAtom
+  );
   const [pathToLastSavedLoadedProfiles, setPathToLastSavedLoadedProfiles] =
     useAtom(lastSavedLoadedProfileJSONPathsAtom);
 
@@ -73,6 +100,8 @@ export function ProfileSetup() {
       autowarePath,
       launchFilePath: launchFilePathh,
       userEditedArgs,
+      userEditedBagPlayArgs,
+      userEditedBagRecordArgs,
     };
 
     //   we send this data to the backend to save the profile in a json file in the profilePath the user chose
@@ -134,10 +163,18 @@ export function ProfileSetup() {
     }
 
     const profileData = result.data;
-    const { autowarePath, launchFilePath, userEditedArgs } = profileData;
+    const {
+      autowarePath,
+      launchFilePath,
+      userEditedArgs,
+      userEditedBagPlayArgs,
+      userEditedBagRecordArgs,
+    } = profileData;
     _setAutowarePath(autowarePath);
     _setLaunchFilePath(launchFilePath);
     _setUserEditedArgs(userEditedArgs);
+    _setUserEditedBagPlayArgs(userEditedBagPlayArgs);
+    _setUserEditedBagRecordArgs(userEditedBagRecordArgs);
 
     if (launchFilePath !== "") {
       await invoke("parse_and_send_xml", {
@@ -177,10 +214,18 @@ export function ProfileSetup() {
     }
 
     const profileData = result.data;
-    const { autowarePath, launchFilePath, userEditedArgs } = profileData;
+    const {
+      autowarePath,
+      launchFilePath,
+      userEditedArgs,
+      userEditedBagPlayArgs,
+      userEditedBagRecordArgs,
+    } = profileData;
     _setAutowarePath(autowarePath);
     _setLaunchFilePath(launchFilePath);
     _setUserEditedArgs(userEditedArgs);
+    _setUserEditedBagPlayArgs(userEditedBagPlayArgs);
+    _setUserEditedBagRecordArgs(userEditedBagRecordArgs);
 
     if (launchFilePath !== "") {
       await invoke("parse_and_send_xml", {
@@ -202,8 +247,18 @@ export function ProfileSetup() {
   return (
     <Popover>
       <PopoverTrigger ref={triggerRef}></PopoverTrigger>
+
       <Button onClick={handleTriggerPopover} variant="default">
-        Profile Load/Save
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger>Profile Load/Save</TooltipTrigger>
+            <TooltipContent className="w-60 font-mono text-xs">
+              Profiles contain autoware folder path, parsed launch file, and
+              user edited args for the launch file as well as user edited bag
+              play/record flags
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>{" "}
       </Button>
       <PopoverContent className="mr-4 mt-6 w-80">
         <div className="grid gap-4">
@@ -255,6 +310,7 @@ export function ProfileSetup() {
                 handleTriggerPopover();
                 setPathToLastSavedLoadedProfiles([]);
               }}
+              variant="destructive"
               className={"w-fit transition-all duration-300"}
             >
               Clear all
