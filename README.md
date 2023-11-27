@@ -4,15 +4,29 @@ Autoware Launch GUI is a Tauri / NextJS application designed to simplify the pro
 
 ## Table of Contents
 
+- [Features](#features)
 - [Dependencies](#dependencies)
   - [Installing Rust](#installing-rust)
   - [Installing Node.js](#installing-nodejs)
 - [Installation](#installation)
 - [Usage](#usage)
-- [Features](#features)
+- [WIP](#wip)
 - [Contributing](#contributing)
 - [Author](#author)
 - [License](#license)
+- [FAQs and Troubleshooting](#faqs-and-troubleshooting)
+
+## Features
+
+Autoware Launch GUI offers a range of features to enhance your experience with Autoware:
+
+- **Launch Autoware with Custom Parameters**: Easily launch Autoware processes with parameters tailored to your needs.
+- **Real-Time Monitoring**: View current CPU/Memory usage and Autoware logs in real-time, with search and highlighting capabilities (INFO, WARN, DEBUG, ERROR, by component).
+- **Profile Management**: Save and load your most-used Autoware launch profiles for quick access.
+- **Configurations and Calibration**: Edit config params YAML files and launch calibration tools with custom parameters.
+- **Bag File Management**: Play, record, and view information of bag files (.db3, .mcap) with custom parameters.
+- **Topic Management**: View topic list, topic types, and topic echo output.
+- **Remote Operation**: Use SSH to launch Autoware on a remote machine with custom parameters.
 
 ## Dependencies
 
@@ -33,11 +47,12 @@ To run or develop the Autoware Launch GUI, you'll need to have both Rust and Nod
    ```bash
    rustc --version
    ```
-   *rustc 1.72.0 (5680fa18f 2023-08-23) is the one i'm currently on while developping this.*
+
+   _rustc 1.72.0 (5680fa18f 2023-08-23) is the one i'm currently on while developping this._
 
 ### Installing Node.js
 
-1. You can download and install Node.js from the [official website](https://nodejs.org/).
+1. You can download and install Node.js (LTS Version) from the [official website](https://nodejs.org/).
 
 2. Alternatively, if you're using a package manager like `apt` for Ubuntu/Debian, you can install Node.js with:
 
@@ -53,7 +68,8 @@ To run or develop the Autoware Launch GUI, you'll need to have both Rust and Nod
    ```bash
    node --version
    ```
-   *v16.20.0 is the one i'm currently on while developping this.*
+
+   _v16.20.0 is the one i'm currently on while developping this._
 
 4. It's also recommended to install `pnpm` as it's not included:
 
@@ -103,6 +119,7 @@ If you're interested in developing additional features or want to run the projec
 For a comprehensive guide on how to use the Autoware Launch GUI, please refer to our demo video. In essence, the process involves:
 
 ## **Demo Video**
+
 [![Autoware Launch GUI Demo](https://github-production-user-asset-6210df.s3.amazonaws.com/36904941/273592037-9bb7c83d-eb79-4991-a43c-16d1c5b2673d.png)](https://www.youtube.com/watch?v=iQEEct-pwpg&ab_channel=KhalilSelyan)
 
 1. Launching the app.
@@ -111,15 +128,24 @@ For a comprehensive guide on how to use the Autoware Launch GUI, please refer to
 4. Adding the necessary parameters, and any extra parameters you'd like to include in your launch command.
 5. Launch Autoware
 
-- Separately, you can also edit config param yaml files located in the `src/launcher/autoware_launch/autoware_launch/config` folder.
+6. Separately, you can also edit config param yaml files located in the `src/launcher/autoware_launch/autoware_launch/config` folder.
 
-## Features
+## WIP
 
 - [x] Launch Autoware with Custom Parameters depending on the selected launch file
 - [x] Kill Autoware Processes
 - [x] Edit Config Params YAML Files
 - [x] View Current CPU/Memory Usage
-- [x] Save and Load Most used Autoware Launch Profiles 
+- [x] Save and Load Most used Autoware Launch Profiles
+- [x] View Autoware Logs in Real Time with ability to search with highliting (INFO, WARN, DEBUG, ERROR, by component)
+- [x] Launch Calibration Tools with Custom Parameters
+- [x] Play bag files (.db3, .mcap) with custom parameters(flags)
+- [x] See bag file info
+- [x] Record bag files (.db3, .mcap) with custom parameters(flags)
+- [x] View Topic List and Topic Types
+- [x] View Topic Echo Output
+- [x] Save and Load most used Profiles with your autoware directories and launch files...
+- [x] use SSH to launch autoware on a remote machine with custom parameters
 
 ## Contributing
 
@@ -136,3 +162,7 @@ We welcome contributions from the community! If you're interested in enhancing t
 ## License
 
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+
+## FAQs and Troubleshooting
+
+For common questions and troubleshooting tips, please open an issue on the [Issues](https://github.com/leo-drive/autoware-launch-gui/issues) page.
