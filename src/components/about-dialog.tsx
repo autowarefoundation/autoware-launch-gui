@@ -14,8 +14,15 @@ import {
   DialogTitle,
 } from "./ui/dialog";
 
+const checkForUpdates = async () => {
+  const { open } = await import("@tauri-apps/plugin-shell");
+
+  return open(
+    "https://github.com/leo-drive/autoware-launch-gui/releases/latest"
+  );
+};
+
 export function AboutDialog() {
-  const [updateText, setUpdateText] = useState("");
   const [version, setVersion] = useState("");
   const [name, setName] = useState("");
   const [tauriVersion, setTauriVersion] = useState("");
@@ -44,7 +51,7 @@ export function AboutDialog() {
     <DialogContent className="overflow-clip pb-2">
       <DialogHeader className="flex items-center text-center">
         <div className="bg-background">
-          <Icons.logo className="invert dark:invert-0" />
+          <Icons.logo className="fill-current text-foreground" />
         </div>
 
         <DialogTitle className="flex flex-col items-center gap-2 pt-2">
@@ -68,12 +75,9 @@ export function AboutDialog() {
           </span>
         </DialogTitle>
 
-        <DialogDescription className=" text-foreground">
+        <DialogDescription className="text-foreground">
           Launch GUI for Autoware Processes
         </DialogDescription>
-
-        <span className="text-xs text-gray-400">{updateText}</span>
-        {/* <DialogDescription className="flex flex-row"></DialogDescription> */}
       </DialogHeader>
 
       <span className="font-mono text-xs font-medium text-gray-400">
@@ -93,12 +97,11 @@ export function AboutDialog() {
             }
           />
         </div>
-
         <Button
           type="submit"
           variant="outline"
           className="h-7 gap-1"
-          onClick={() => setUpdateText("You have the latest version.")}
+          onClick={async () => await checkForUpdates()}
         >
           <UpdateIcon /> Check for Updates
         </Button>
