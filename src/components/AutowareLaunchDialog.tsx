@@ -321,7 +321,6 @@ const PackageDropdown = memo(function PackageDropdown({
   const handlePackageSelect = useCallback(
     (value: string) => {
       const pkg = value;
-      console.log(pkg);
       setSelectedPackage(pkg);
       onPackageSelect(pkg);
     },

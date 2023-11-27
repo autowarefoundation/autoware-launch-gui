@@ -199,10 +199,6 @@ const TreeItem = React.forwardRef<HTMLDivElement, TreeItemProps>(
                                 line.includes(item.name)
                               );
                               const line = lines[lineIndex];
-
-                              console.log("file", line);
-
-                              console.log("item", item.attributes);
                             }}
                           >
                             Save Changes

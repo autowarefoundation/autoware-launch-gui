@@ -98,7 +98,6 @@ const TopicsBagRecord = () => {
       const unlistenBagRecord = await appWindow.listen(
         "ros2-bag-record-output",
         (data) => {
-          console.log("ros2-bag-record-output", data);
           const bagRecordOutput = data.payload as string;
 
           setBagRecordLog((prev) => {

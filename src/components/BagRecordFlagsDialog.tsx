@@ -45,7 +45,6 @@ export function RosbagRecordFlagsDialog() {
   const handleSave = () => {
     const newFlags = Object.entries(localFlags)
       .map(([key, value]) => {
-        console.log("key: ", key, " value: ", value);
         if (value.value !== undefined)
           return {
             arg: key,
