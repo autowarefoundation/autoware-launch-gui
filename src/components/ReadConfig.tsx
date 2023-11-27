@@ -1,16 +1,17 @@
-"use client"
+"use client";
 
-import React, { useEffect, useRef, useState } from "react"
-import { message, open } from "@tauri-apps/plugin-dialog"
-import { readTextFile, writeTextFile } from "@tauri-apps/plugin-fs"
+import React, { useEffect, useRef, useState } from "react";
+import { open } from "@tauri-apps/plugin-dialog";
+import { readTextFile, writeTextFile } from "@tauri-apps/plugin-fs";
 
-import { Button } from "./ui/button"
-import { Textarea } from "./ui/textarea"
+import { Button } from "./ui/button";
+import { Textarea } from "./ui/textarea";
+import { toast } from "./ui/use-toast";
 
 const ReadConfig: React.FC = () => {
-  const [fileContent, setFileContent] = useState<string | null>(null)
-  const textareaRef = useRef<HTMLTextAreaElement>(null)
-  const [filePath, setFilePath] = useState<string | null>(null)
+  const [fileContent, setFileContent] = useState<string | null>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const [filePath, setFilePath] = useState<string | null>(null);
 
   const handleFileRead = async () => {
     try {
@@ -19,36 +20,44 @@ const ReadConfig: React.FC = () => {
         multiple: false,
         directory: false,
         filters: [{ name: "YAML", extensions: ["yaml", "yml"] }],
-      })
+      });
       if (paths) {
         // Use the fs plugin to read the selected file
-        const content = await readTextFile(paths.path)
-        setFileContent(content)
-        setFilePath(paths.path)
+        const content = await readTextFile(paths.path);
+        setFileContent(content);
+        setFilePath(paths.path);
       }
     } catch (error) {
-      console.error("Error reading the file:", error)
+      console.error("Error reading the file:", error);
     }
-  }
+  };
 
   const handleFileSave = async () => {
     if (filePath && fileContent) {
       try {
-        await writeTextFile(filePath, fileContent)
-        message("File saved successfully!")
+        await writeTextFile(filePath, fileContent);
+        toast({
+          type: "foreground",
+          description: "File saved!",
+          variant: "default",
+        });
       } catch (error) {
-        console.error("Error writing to the file:", error)
+        console.error("Error writing to the file:", error);
       }
     } else {
-      message("No file selected!")
+      toast({
+        type: "foreground",
+        description: "No file selected!",
+        variant: "destructive",
+      });
     }
-  }
+  };
   useEffect(() => {
     if (textareaRef.current) {
-      textareaRef.current.style.height = "auto"
-      textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`
+      textareaRef.current.style.height = "auto";
+      textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
     }
-  }, [fileContent])
+  }, [fileContent]);
 
   return (
     <div className="flex w-full flex-col gap-4 p-4">
@@ -60,10 +69,10 @@ const ReadConfig: React.FC = () => {
         className="w-1/2 resize-none"
         value={fileContent || ""}
         onChange={(e) => {
-          setFileContent(e.target.value)
+          setFileContent(e.target.value);
           if (textareaRef.current) {
-            textareaRef.current.style.height = "auto"
-            textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`
+            textareaRef.current.style.height = "auto";
+            textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
           }
         }}
       />
@@ -71,7 +80,7 @@ const ReadConfig: React.FC = () => {
         Save Changes
       </Button>
     </div>
-  )
-}
+  );
+};
 
-export default ReadConfig
+export default ReadConfig;
