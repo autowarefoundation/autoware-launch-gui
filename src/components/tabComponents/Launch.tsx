@@ -2,7 +2,7 @@
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/tauri";
-import { message, open } from "@tauri-apps/plugin-dialog";
+import { open } from "@tauri-apps/plugin-dialog";
 import { useAtom } from "jotai";
 
 import {
@@ -18,11 +18,16 @@ import {
   parsedLaunchFilesAtom,
   pidsLengthAtom,
   selectedLaunchArgsAtom,
+  sshHostAtom,
+  sshIsConnectedAtom,
+  sshPasswordAtom,
+  sshUsernameAtom,
   userEditedArgsAtom,
 } from "@/app/jotai/atoms";
 
 import AutowareFolderSetup from "../AutowareFolderSetup";
 import { AutowareLaunchDialog } from "../AutowareLaunchDialog";
+import CalibrationTools from "../CalibrationTools";
 import { EditArgsDialog } from "../EditArgsDialog";
 import { ProfileSetup } from "../ProfileSetup";
 import type { ElementData } from "../Tree";
@@ -48,8 +53,6 @@ const Launch = () => {
       const unlistenCloseRequest = await appWindow.listen(
         "close_requested",
         async (msg) => {
-          console.log("close_requested", msg.payload);
-
           await invoke("kill_autoware_process", {
             payload: {},
           });
@@ -290,13 +293,26 @@ const Launch = () => {
   const [_launchLogsComponent, setLaunchLogsComponent] = useAtom(
     launchLogsComponentAtom
   );
+
+  const [host, _setHost] = useAtom(sshHostAtom);
+  const [user, _setUser] = useAtom(sshUsernameAtom);
+  const [isSSHConnected, _setIsConnected] = useAtom(sshIsConnectedAtom);
+
   const handleLaunchAutoware = useCallback(async () => {
     if (!autowarePath) {
-      message("Please select autoware folder path");
+      toast({
+        type: "foreground",
+        description: "Please select autoware folder path",
+        variant: "destructive",
+      });
       return;
     }
     if (!launchFilePath) {
-      message("Please select a launch file");
+      toast({
+        type: "foreground",
+        description: "Please select a launch file",
+        variant: "destructive",
+      });
       return;
     }
 
@@ -387,13 +403,30 @@ const Launch = () => {
         setLaunchLogsDebug([]);
         setLaunchLogsComponent([]);
 
-        await invoke("launch_autoware", {
-          payload: {
-            path: autowarePath,
-            launchFile: launchFilePath,
-            argsToLaunch,
-          },
-        });
+        if (!isSSHConnected) {
+          await invoke("launch_autoware", {
+            payload: {
+              path: autowarePath,
+              launchFile: launchFilePath,
+              argsToLaunch,
+            },
+          });
+        } else {
+          // Construct the command arguments string dynamically
+          const cmdArgs = argsToLaunch
+            .map((arg) => `${arg.arg}:=${arg.value}`)
+            .join(" ");
+
+          const cmdStr =
+            `source /opt/ros/humble/setup.bash && ` +
+            `source /home/${user}/autoware/install/setup.bash && ` +
+            `ros2 launch autoware_launch ${launchFilePath} ${cmdArgs}`;
+
+          setAutowareLaunchedInSSH(true);
+          const result = (await invoke("execute_command_in_shell", {
+            payload: { command: cmdStr, user, host },
+          })) as string;
+        }
         return;
       } else {
         toast({
@@ -420,7 +453,11 @@ const Launch = () => {
       title: "Select A Launch File",
     });
     if (!file && !parsedFilePath) {
-      message("Please select a launch file");
+      toast({
+        type: "foreground",
+        description: "Please select a launch file",
+        variant: "destructive",
+      });
     }
     if (!file) {
       return;
@@ -428,6 +465,7 @@ const Launch = () => {
     await invoke("parse_and_send_xml", {
       payload: {
         path: file.path,
+        calibrationTool: false,
       },
     });
 
@@ -435,6 +473,8 @@ const Launch = () => {
     setParsedFilePath(file.path);
     setUserEditedArgs([]);
   }, [autowarePath]);
+
+  const [autowareLaunchedInSSH, setAutowareLaunchedInSSH] = useState(false);
 
   return (
     <div className="flex h-full w-full flex-col gap-4">
@@ -458,7 +498,8 @@ const Launch = () => {
             pidsLen !== 0 ||
             !autowarePath ||
             !launchFilePath ||
-            autowareProcessesNames.length > 35
+            autowareProcessesNames.length > 35 ||
+            (autowareLaunchedInSSH && isSSHConnected)
           }
         >
           {autowareProcessesNames.length > 35
@@ -469,12 +510,30 @@ const Launch = () => {
         </Button>
         <Button
           onClick={async () => {
-            await invoke("kill_autoware_process", {
-              payload: {},
-            });
+            if (!isSSHConnected) {
+              await invoke("kill_autoware_process", {
+                payload: {},
+              });
+            } else {
+              const response = await invoke("kill_ssh_connection", {
+                payload: {},
+              });
+              _setIsConnected(false);
+              setAutowareLaunchedInSSH(false);
+
+              toast({
+                variant: "destructive",
+                title: "Autoware Killed in Remote Machine",
+                description:
+                  "Autoware is closed and SSH Connection Closed Successfully",
+              });
+            }
           }}
           className="w-fit"
-          disabled={pidsLen === 0}
+          disabled={
+            (!isSSHConnected && pidsLen === 0) ||
+            (!autowareLaunchedInSSH && isSSHConnected)
+          }
           variant="destructive"
         >
           Kill Autoware
@@ -483,6 +542,7 @@ const Launch = () => {
         <AutowareFolderSetup />
 
         <div className="ml-auto flex items-center gap-2">
+          <CalibrationTools />
           <ProfileSetup />
         </div>
       </div>

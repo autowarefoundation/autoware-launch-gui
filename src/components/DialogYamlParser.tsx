@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/tauri";
-import { message } from "@tauri-apps/plugin-dialog";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -17,6 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 import { Checkbox } from "./ui/checkbox";
+import { toast } from "./ui/use-toast";
 
 interface YamlArgsDialogProps {
   yamlData: { [key: string]: any };
@@ -335,9 +335,10 @@ export function YamlArgsDialog({
         valueToUpdate.value == null ||
         valueToUpdate.value === ""
       ) {
-        message("Invalid value please check the type", {
-          title: "Error",
-          type: "error",
+        toast({
+          type: "foreground",
+          description: "Invalid value please check the type",
+          variant: "destructive",
         });
         return;
       }

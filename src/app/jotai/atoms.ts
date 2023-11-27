@@ -48,6 +48,7 @@ export const parsedLaunchFilesAtom = atomWithStorage<ElementData[]>(
   "parsedLaunchFilesLaunchGUI",
   []
 );
+
 export const parsedLaunchFilePathAtom = atomWithStorage<string>(
   "parsedLaunchFilePathLaunchGUI",
   ""
@@ -57,9 +58,30 @@ export const selectedLaunchArgsAtom = atom<{ arg: string; value: string }[]>(
   []
 );
 
+export const selectedCalibrationLaunchArgsAtom = atom<
+  { arg: string; value: string }[]
+>([]);
+
 export const userEditedArgsAtom = atomWithStorage<
   { arg: string; value: string }[]
 >("userEditedArgsLaunchGUI", []);
+
+export const parsedCalibrationLaunchFilesAtom = atomWithStorage<ElementData[]>(
+  "parsedCalibrationLaunchFilesLaunchGUI",
+  []
+);
+
+export const calibrationToolArgsAtom = atom<{ arg: string; value: string }[]>(
+  []
+);
+
+export const calibrationToolLaunchPathsAtom = atomWithStorage<{
+  [calibrationTool: string]: string;
+}>("calibrationToolLaunchPathsLaunchGUI", {});
+
+export const userEditedCalibrationToolArgsAtom = atomWithStorage<{
+  [calibrationTool: string]: { arg: string; value: string }[];
+}>("userEditedCalibrationToolArgsLaunchGUI", {});
 
 export const pidsLengthAtom = atom<number>(0);
 
@@ -120,6 +142,13 @@ export const userEditedBagRecordFlagsAtom = atomWithStorage<
     value: string | boolean | number;
   }[]
 >("userEditedBagRecordFlagsLaunchGUI", []);
+
+export const sshHostAtom = atom<string>("");
+export const sshUsernameAtom = atom<string>("");
+export const sshPasswordAtom = atom<string>("");
+export const sshCommandAtom = atom<string>("");
+export const sshOutputAtom = atom<string[]>([]);
+export const sshIsConnectedAtom = atom<boolean>(false);
 
 export const rosbagPlayFlags: {
   [key: string]: {

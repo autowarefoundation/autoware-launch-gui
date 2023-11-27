@@ -15,20 +15,87 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { userEditedArgsAtom } from "@/app/jotai/atoms";
+import {
+  userEditedArgsAtom,
+  userEditedCalibrationToolArgsAtom,
+} from "@/app/jotai/atoms";
 
 interface EditArgsDialogProps extends React.HTMLAttributes<HTMLDivElement> {
   arg: { arg: string; value: string };
   handleArgSelect: (arg: { arg: string; value: string }) => void;
   handleArgRemove: (arg: { arg: string; value: string }) => void;
+  calibrationTool?: boolean;
+  selectedCalibrationTool?: string;
 }
 
 export function EditArgsDialog(props: EditArgsDialogProps) {
-  const { className, arg, handleArgSelect, handleArgRemove, ...otherProps } =
-    props;
+  const {
+    className,
+    calibrationTool,
+    selectedCalibrationTool,
+    arg,
+    handleArgSelect,
+    handleArgRemove,
+    ...otherProps
+  } = props;
+
+  // Atom for general arguments
   const [userEditedArgs, setUserEditedArgs] = useAtom(userEditedArgsAtom);
+  // Atom for calibration tool arguments
+  const [calibrationToolArgs, setCalibrationToolArgs] = useAtom(
+    userEditedCalibrationToolArgsAtom
+  );
+
   const inputRef = useRef<HTMLInputElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
+
+  const updateArgs = async () => {
+    const newValue = inputRef.current?.value || "";
+    if (calibrationTool && selectedCalibrationTool) {
+      // Update calibration tool arguments
+      setCalibrationToolArgs((prevArgs) => {
+        const updatedArgs = prevArgs ? { ...prevArgs } : {};
+        // Ensure the array exists for the selected calibration tool
+        if (!updatedArgs[selectedCalibrationTool]) {
+          updatedArgs[selectedCalibrationTool] = [];
+        }
+
+        if (newValue === "") {
+          updatedArgs[selectedCalibrationTool] = updatedArgs[
+            selectedCalibrationTool
+          ].filter((a) => a.arg !== arg.arg);
+          handleArgRemove(arg);
+        } else {
+          const newArgs =
+            updatedArgs[selectedCalibrationTool].filter(
+              (a) => a.arg !== arg.arg
+            ) || [];
+
+          updatedArgs[selectedCalibrationTool] = [
+            ...newArgs,
+            { arg: arg.arg, value: newValue },
+          ];
+          handleArgSelect({ arg: arg.arg, value: newValue });
+        }
+        return updatedArgs;
+      });
+    } else {
+      // Update general arguments
+      if (newValue === "") {
+        setUserEditedArgs((args) => args.filter((a) => a.arg !== arg.arg));
+        handleArgRemove(arg);
+      } else {
+        setUserEditedArgs((args) => {
+          const newArgs = args.filter((a) => a.arg !== arg.arg);
+          return [...newArgs, { arg: arg.arg, value: newValue }];
+        });
+        handleArgSelect({ arg: arg.arg, value: newValue });
+      }
+    }
+
+    closeRef.current?.click();
+  };
+
   return (
     <Dialog>
       <DialogTrigger ref={closeRef} asChild>
@@ -60,10 +127,15 @@ export function EditArgsDialog(props: EditArgsDialogProps) {
               </Label>
               <Input
                 ref={inputRef}
-                id="username"
+                id="defval"
                 readOnly
                 defaultValue={
                   arg.value ||
+                  (calibrationTool &&
+                    selectedCalibrationTool &&
+                    calibrationToolArgs[selectedCalibrationTool]?.find(
+                      (a) => a.arg === arg.arg
+                    )?.value) ||
                   userEditedArgs.find((a) => a.arg === arg.arg)?.value ||
                   ""
                 }
@@ -77,9 +149,13 @@ export function EditArgsDialog(props: EditArgsDialogProps) {
             </Label>
             <Input
               ref={inputRef}
-              id="username"
+              id="newval"
               defaultValue={
-                userEditedArgs.find((a) => a.arg === arg.arg)?.value || ""
+                calibrationTool && selectedCalibrationTool
+                  ? calibrationToolArgs[selectedCalibrationTool]?.find(
+                      (a) => a.arg === arg.arg
+                    )?.value
+                  : userEditedArgs.find((a) => a.arg === arg.arg)?.value || ""
               }
               className="col-span-3"
             />
@@ -88,53 +164,49 @@ export function EditArgsDialog(props: EditArgsDialogProps) {
         <DialogFooter>
           <Button
             onClick={() => {
-              setUserEditedArgs((prev) =>
-                prev.filter((a) => a.arg !== arg.arg)
-              );
+              if (calibrationTool && selectedCalibrationTool) {
+                setCalibrationToolArgs((prevArgs) => {
+                  const updatedArgs = prevArgs ? { ...prevArgs } : {};
+                  updatedArgs[selectedCalibrationTool] = updatedArgs[
+                    selectedCalibrationTool
+                  ].filter((a) => a.arg !== arg.arg);
+                  return updatedArgs;
+                });
+              } else {
+                setUserEditedArgs((args) =>
+                  args.filter((a) => a.arg !== arg.arg)
+                );
+              }
               handleArgRemove(arg);
-
               closeRef.current?.click();
             }}
             variant="destructive"
           >
-            {userEditedArgs.find((a) => a.arg === arg.arg)
+            {calibrationTool && selectedCalibrationTool
+              ? calibrationToolArgs[selectedCalibrationTool]?.find(
+                  (a) => a.arg === arg.arg
+                )
+                ? "Remove from command"
+                : "Cancel"
+              : userEditedArgs.find((a) => a.arg === arg.arg)
               ? "Remove from command"
               : "Cancel"}
           </Button>
           <DialogTrigger asChild>
             <Button
-              onClick={() => {
-                const newEditedArgs = (
-                  prev: { arg: string; value: string }[]
-                ) => {
-                  if (!inputRef.current?.value) return prev;
-                  const newArgs = prev.filter((a) => a.arg !== arg.arg);
-                  return [
-                    ...newArgs,
-                    { arg: arg.arg, value: inputRef.current.value },
-                  ];
-                };
-
-                if (inputRef.current?.value === "") {
-                  setUserEditedArgs((prev) =>
-                    prev.filter((a) => a.arg !== arg.arg)
-                  );
-                  handleArgRemove(arg);
-                  return;
-                }
-
-                setUserEditedArgs((prev) => {
-                  return newEditedArgs(prev);
-                });
-
-                handleArgSelect({
-                  arg: arg.arg,
-                  value: inputRef.current?.value || "",
-                });
+              onClick={async () => {
+                await updateArgs();
+                closeRef.current?.click();
               }}
               variant="outline"
             >
-              {userEditedArgs.find((a) => a.arg === arg.arg)
+              {calibrationTool && selectedCalibrationTool
+                ? calibrationToolArgs[selectedCalibrationTool]?.find(
+                    (a) => a.arg === arg.arg
+                  )
+                  ? "Update"
+                  : "Add to command"
+                : userEditedArgs.find((a) => a.arg === arg.arg)
                 ? "Update"
                 : "Add to command"}
             </Button>
