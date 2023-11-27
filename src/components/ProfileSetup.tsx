@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/tauri";
-import { message, open, save } from "@tauri-apps/plugin-dialog";
+import { open, save } from "@tauri-apps/plugin-dialog";
 import { useAtom } from "jotai";
 import { z } from "zod";
 
@@ -28,6 +28,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "./ui/tooltip";
+import { toast } from "./ui/use-toast";
 
 const ProfileDataSchema = z.object({
   autowarePath: z.string(),
@@ -155,9 +156,10 @@ export function ProfileSetup() {
     if (!result.success) {
       // Handle the error. The error details are in result.error
       console.error("Invalid profile data:", result.error);
-      message("Please check the format of the profile file", {
-        title: "Invalid profile data",
-        type: "error",
+      toast({
+        type: "foreground",
+        description: "Please check the format of the profile file",
+        variant: "destructive",
       });
       return;
     }
@@ -206,9 +208,10 @@ export function ProfileSetup() {
     if (!result.success) {
       // Handle the error. The error details are in result.error
       console.error("Invalid profile data:", result.error);
-      message("Please check the format of the profile file", {
-        title: "Invalid profile data",
-        type: "error",
+      toast({
+        type: "foreground",
+        description: "Please check the format of the profile file",
+        variant: "destructive",
       });
       return;
     }

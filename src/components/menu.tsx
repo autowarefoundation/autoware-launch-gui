@@ -3,10 +3,12 @@
 import { useEffect, useRef, useState } from "react";
 import { useAtom } from "jotai";
 import {
+  Cable,
   ChevronDown,
   Info,
   Maximize2,
   Minimize2,
+  Network,
   Play,
   Rocket,
   Video,
@@ -17,6 +19,7 @@ import { WindowTitlebar } from "tauri-controls";
 import { isBagPlayingAtom, tabAtom } from "@/app/jotai/atoms";
 
 import { AboutDialog } from "./about-dialog";
+import SSHComponent from "./SSHDialog";
 import { Button } from "./ui/button";
 import { Dialog, DialogTrigger } from "./ui/dialog";
 import {
@@ -33,7 +36,8 @@ export function Menu() {
   const [tab, setTab] = useAtom(tabAtom);
   const [isPlaying, _setIsPlaying] = useAtom(isBagPlayingAtom);
 
-  const dialogTriggerRef = useRef<HTMLButtonElement>(null);
+  const SSHDialogTriggerRef = useRef<HTMLButtonElement>(null);
+  const aboutDialogTriggerRef = useRef<HTMLButtonElement>(null);
 
   const [isMaximized, setIsMaximized] = useState(false);
   useEffect(() => {
@@ -65,6 +69,9 @@ export function Menu() {
             break;
           case "3":
             setTab("topics");
+            break;
+          case "`":
+            SSHDialogTriggerRef.current?.click();
             break;
           // Add more cases as needed
           default:
@@ -101,6 +108,17 @@ export function Menu() {
           <MenubarContent className="flex flex-col gap-2">
             <MenubarItem
               className="flex items-center gap-2"
+              onClick={() => {
+                SSHDialogTriggerRef.current?.click();
+              }}
+            >
+              <Network className="h-4 w-4" />
+              <span className="font-mono text-sm">SSH connection</span>
+              <MenubarShortcut>CTRL+`</MenubarShortcut>
+            </MenubarItem>
+            <MenubarSeparator />
+            <MenubarItem
+              className="flex items-center gap-2"
               onClick={() => setTab("launch")}
             >
               <Rocket className="h-4 w-4" />
@@ -129,7 +147,7 @@ export function Menu() {
             <MenubarItem
               className="flex items-center gap-2"
               onClick={() => {
-                dialogTriggerRef.current?.click();
+                aboutDialogTriggerRef.current?.click();
               }}
             >
               <Info className="h-4 w-4" />
@@ -173,7 +191,12 @@ export function Menu() {
       </Menubar>
 
       <Dialog modal={false}>
-        <DialogTrigger ref={dialogTriggerRef}></DialogTrigger>
+        <DialogTrigger ref={SSHDialogTriggerRef}></DialogTrigger>
+        <SSHComponent />
+      </Dialog>
+
+      <Dialog modal={false}>
+        <DialogTrigger ref={aboutDialogTriggerRef}></DialogTrigger>
         <AboutDialog />
       </Dialog>
       {/* App Title */}

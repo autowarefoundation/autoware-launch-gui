@@ -1,10 +1,10 @@
 [package]
 name = "autoware-launch-gui"
-version = "1.0.2"
+version = "1.0.3"
 description = "A GUI for launching Autoware packages"
 authors = ["Khalil Selyan"]
 license = "MIT"
-repository = ""
+repository = "https://github.com/leo-drive/autoware-launch-gui"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -32,7 +32,8 @@ sysinfo = "0.18"
 nix = "0.23.0"  # Check for the latest version
 dirs = "5.0.1"
 regex = "1.9.6"
-
+ssh2 = "0.9"
+strip-ansi-escapes = "0.2"
 
 
 

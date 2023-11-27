@@ -22,7 +22,7 @@ impl Element {
 }
 
 #[tauri::command]
-pub fn parse_and_send_xml(window: tauri::Window<Wry>, path: String) {
+pub fn parse_and_send_xml(window: tauri::Window<Wry>, path: String, calibration_tool: bool) {
     let path = Path::new(&path);
     // Open the XML file
     let file = File::open(path).ok().expect("Unable to open file");
@@ -70,7 +70,15 @@ pub fn parse_and_send_xml(window: tauri::Window<Wry>, path: String) {
         "elements": elements.iter().map(|element| element.to_json()).collect::<Vec<_>>()
     });
 
-    window
-        .emit("receiveTree", Some(elements_json.to_string()))
-        .expect("Failed to emit tree");
+    let window2 = window.clone();
+
+    if calibration_tool {
+        window2
+            .emit("receiveTreeCalibration", Some(elements_json.to_string()))
+            .expect("Failed to emit tree");
+    } else {
+        window
+            .emit("receiveTree", Some(elements_json.to_string()))
+            .expect("Failed to emit tree");
+    }
 }

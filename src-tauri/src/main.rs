@@ -17,10 +17,14 @@ use components::autoware_manager::{
 };
 use components::json_profile::{load_profile, save_profile};
 use components::ros2_cmd_manager::{
-    kill_bag_record, kill_topic_echo, start_bag_record, start_topic_echo,
+    kill_bag_record, kill_calibration_tool, kill_topic_echo, launch_tool, start_bag_record,
+    start_topic_echo,
 };
 use components::rosbag_manager::{
     get_rosbag_info, play_rosbag, set_rosbag_playback_rate, stop_rosbag_play, toggle_pause_state,
+};
+use components::ssh_manager::{
+    connect_ssh, execute_command_in_shell, kill_ssh_connection, start_shell_session,
 };
 use components::xml_parse::parse_and_send_xml;
 use components::yaml_edit::{find_yaml_files, parse_yaml, save_edits_yaml};
@@ -229,6 +233,12 @@ async fn main() {
             kill_topic_echo,
             start_bag_record,
             kill_bag_record,
+            execute_command_in_shell,
+            start_shell_session,
+            kill_ssh_connection,
+            connect_ssh,
+            launch_tool,
+            kill_calibration_tool
         ])
         .setup(move |app| {
             let app_for_async = app.app_handle().clone();

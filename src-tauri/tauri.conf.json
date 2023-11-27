@@ -8,7 +8,7 @@
   },
   "package": {
     "productName": "Autoware Launch GUI",
-    "version": "1.0.2"
+    "version": "1.0.3"
   },
   "tauri": {
     "bundle": {
@@ -79,7 +79,7 @@
         "resizable": false,
         "decorations": false,
         "transparent": true,
-        "width": 1200,
+        "width": 800,
         "height": 590,
         "label": "splash",
         "url": "splash.html",
