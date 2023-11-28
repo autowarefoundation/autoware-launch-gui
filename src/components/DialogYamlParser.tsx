@@ -24,6 +24,17 @@ interface YamlArgsDialogProps {
   path: string;
 }
 
+interface ValueObject {
+  type: "string" | "integer" | "float" | "boolean";
+  value: any; // You can refine this type based on your actual value structure
+}
+interface InitialValues {
+  input: { [key: string]: string };
+  checkbox: { [key: string]: boolean };
+  integer: { [key: string]: number };
+  double: { [key: string]: number };
+}
+
 export function YamlArgsDialog({
   path,
   yamlData: initialYamlData,
@@ -38,9 +49,10 @@ export function YamlArgsDialog({
 
   useEffect(() => {
     setParams(yamlData["/**"]["ros__parameters"] || {});
+    console.log("Yaml data changed", yamlData["/**"]["ros__parameters"]);
   }, [yamlData]);
 
-  const isArrayRepresentation = (obj: any) => {
+  const isArrayRepresentation = (obj: any): obj is ValueObject[] => {
     return (
       obj &&
       typeof obj === "object" &&
@@ -48,12 +60,32 @@ export function YamlArgsDialog({
     );
   };
 
-  const initializeValues = (params: { [key: string]: any }) => {
-    const initialValues = {
-      input: {} as { [key: string]: string },
-      checkbox: {} as { [key: string]: boolean },
-      integer: {} as { [key: string]: number },
-      double: {} as { [key: string]: number },
+  const initializeValues = (params: {
+    [key: string]: ValueObject | ValueObject[];
+  }): InitialValues => {
+    const initialValues: InitialValues = {
+      input: {},
+      checkbox: {},
+      integer: {},
+      double: {},
+    };
+
+    const processValue = (valueObj: ValueObject, fullKey: string) => {
+      switch (valueObj.type) {
+        case "string":
+          initialValues.input[fullKey] = valueObj.value;
+          break;
+        case "integer":
+          initialValues.integer[fullKey] = valueObj.value;
+          break;
+        case "float":
+          initialValues.double[fullKey] = valueObj.value;
+          break;
+        case "boolean":
+          initialValues.checkbox[fullKey] = valueObj.value;
+          break;
+        // Add more cases as needed
+      }
     };
 
     const traverseParams = (
@@ -61,57 +93,34 @@ export function YamlArgsDialog({
       prefix: string = ""
     ) => {
       Object.entries(currentParams).forEach(([key, valueObj]) => {
-        const value = valueObj.value;
         const fullKey = prefix ? `${prefix}.${key}` : key;
+
         if (isArrayRepresentation(valueObj)) {
-          // This is an array representation
-          valueObj.forEach((item: any, index: number) => {
+          valueObj.forEach((item, index) => {
             const arrayKey = `${fullKey}.${index}`;
-            switch (item.type) {
-              case "string":
-                initialValues.input[arrayKey] = item.value;
-                break;
-              case "integer":
-                initialValues.integer[arrayKey] = item.value;
-                break;
-              case "float":
-                initialValues.double[arrayKey] = item.value;
-                break;
-              case "boolean":
-                initialValues.checkbox[arrayKey] = item.value;
-                break;
-              default:
-                if (typeof item.value === "object" && item.value !== null) {
-                  traverseParams({ [arrayKey]: item.value });
-                }
-                break;
+            if (typeof item === "object" && item !== null) {
+              traverseParams({ [arrayKey]: item }, arrayKey);
+            } else {
+              processValue(item, arrayKey);
             }
           });
-        } else
-          switch (valueObj.type) {
-            case "string":
-              initialValues.input[fullKey] = value;
-              break;
-            case "integer":
-              initialValues.integer[fullKey] = value;
-              break;
-            case "float":
-              initialValues.double[fullKey] = value;
-              break;
-            case "boolean":
-              initialValues.checkbox[fullKey] = value;
-              break;
-            default:
-              if (typeof value === "object" && value !== null) {
-                traverseParams(value, fullKey);
-              }
-              break;
+        } else if (typeof valueObj === "object" && valueObj !== null) {
+          // Enhanced handling for nested objects
+          if (
+            valueObj.hasOwnProperty("type") &&
+            valueObj.hasOwnProperty("value")
+          ) {
+            processValue(valueObj, fullKey);
+          } else {
+            Object.entries(valueObj).forEach(([nestedKey, nestedValue]) => {
+              traverseParams({ [nestedKey]: nestedValue }, fullKey);
+            });
           }
+        }
       });
     };
 
     traverseParams(params);
-
     return initialValues;
   };
 
