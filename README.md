@@ -65,8 +65,10 @@ To develop the Autoware Launch GUI, you'll need to have both Rust and Node.js in
    - For Ubuntu/Debian:
 
      ```bash
-     sudo apt update
-     sudo apt install nodejs
+     sudo apt-get update
+     sudo apt-get install npm
+     sudo npm install -g n
+     sudo n stable
      ```
 
 3. Verify your Node.js installation with:
