@@ -19,6 +19,10 @@ pub static CALIBRATION_PROCESS: Lazy<Arc<Mutex<HashMap<String, tokio::process::C
     Lazy::new(|| Arc::new(Mutex::new(HashMap::new())));
 pub static CALIBRATION_PIDS: Lazy<Arc<Mutex<HashMap<String, Vec<i32>>>>> =
     Lazy::new(|| Arc::new(Mutex::new(HashMap::new())));
+pub static TOPIC_PUBLISH_PROCESS: Lazy<Arc<Mutex<Option<tokio::process::Child>>>> =
+    Lazy::new(|| Arc::new(Mutex::new(None)));
+pub static SERVICE_CALL_PROCESS: Lazy<Arc<Mutex<Option<tokio::process::Child>>>> =
+    Lazy::new(|| Arc::new(Mutex::new(None)));
 
 // Define the Flag and Value enums
 #[derive(Debug, Deserialize)]
@@ -403,4 +407,287 @@ pub async fn kill_calibration_tool(
         .unwrap();
 
     Ok(())
+}
+
+#[tauri::command]
+pub async fn get_message_interface(
+    message_type: String,
+    autoware_path: String,
+) -> Result<String, String> {
+    // Execute the `ros2 interface proto x` command
+    let cmd_str = format!(
+        "source /opt/ros/humble/setup.bash && \
+         source {}/install/setup.bash && \
+         ros2 interface proto {} --no-quotes",
+        autoware_path, message_type
+    );
+
+    let output = Command::new("bash")
+        .arg("-c")
+        .arg(&cmd_str)
+        .output()
+        .await
+        .map_err(|e| e.to_string())?;
+
+    if !output.status.success() {
+        return Err(String::from_utf8_lossy(&output.stderr).to_string());
+    }
+
+    let output_str = String::from_utf8_lossy(&output.stdout).to_string();
+
+    Ok(output_str)
+}
+
+#[tauri::command]
+pub async fn publish_message(
+    topic: String,
+    message_type: String,
+    message: String,
+    flags: Vec<Flag>,
+    autoware_path: String,
+    window: tauri::Window<Wry>,
+) -> Result<(), String> {
+    let publish_process = Arc::clone(&TOPIC_PUBLISH_PROCESS);
+
+    // Construct the command string dynamically based on the provided flags
+    let mut cmd_flags = String::new();
+    for flag in &flags {
+        match &flag.value {
+            Value::Bool(b) => {
+                if *b {
+                    cmd_flags.push_str(&format!(" {} ", flag.arg));
+                }
+            }
+            Value::String(s) => {
+                if s.is_empty() {
+                    continue;
+                }
+                cmd_flags.push_str(&format!(" {} {} ", flag.arg, s));
+            }
+        }
+    }
+
+    let mut cmd_str = format!(
+        "source /opt/ros/humble/setup.bash && \
+         source {}/install/setup.bash && \
+         ros2 topic pub {} {} {}",
+        autoware_path, topic, message_type, message
+    );
+
+    cmd_str.push_str(&cmd_flags);
+
+    println!("Running command: {}", cmd_str);
+
+    let mut output = Command::new("bash")
+        .arg("-c")
+        .arg(&cmd_str)
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+        .expect("Failed to start the publish process");
+
+    let stdout: tokio::process::ChildStdout = output
+        .stdout
+        .take()
+        .expect("child did not have a handle to stdout");
+
+    let stderr: tokio::process::ChildStderr = output
+        .stderr
+        .take()
+        .expect("child did not have a handle to stderr");
+
+    // emit the output to the frontend
+    tokio::spawn(async move {
+        let reader = BufReader::new(stdout);
+        let mut lines = reader.lines();
+
+        while let Ok(Some(line)) = lines.next_line().await {
+            window.emit("ros2-topic-pub-output", line).unwrap();
+        }
+
+        let err_reader = BufReader::new(stderr);
+        let mut err_lines = err_reader.lines();
+
+        while let Ok(Some(line)) = err_lines.next_line().await {
+            window.emit("ros2-topic-pub-output", line).unwrap();
+        }
+    });
+
+    // Store the child process reference
+    let mut process_handle = publish_process.lock().unwrap();
+    *process_handle = Some(output);
+    println!(
+        "Process handle id for topic publish: {}",
+        process_handle.as_ref().unwrap().id().unwrap()
+    );
+
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn call_service(
+    service_name: String,
+    service_type: String,
+    request: String,
+    flag: Flag,
+    autoware_path: String,
+    window: tauri::Window<Wry>,
+) -> Result<(), String> {
+    let service_process = Arc::clone(&SERVICE_CALL_PROCESS);
+
+    let mut cmd_flag = String::new();
+
+    match &flag.value {
+        Value::String(s) => {
+            if !s.is_empty() {
+                cmd_flag.push_str(&format!(" {} {} ", flag.arg, s));
+            }
+        }
+        _ => {}
+    }
+
+    let mut cmd_str = format!(
+        "source /opt/ros/humble/setup.bash && \
+         source {}/install/setup.bash && \
+         ros2 service call {} {} {}",
+        autoware_path, service_name, service_type, request
+    );
+
+    cmd_str.push_str(&cmd_flag);
+
+    println!("Running command: {}", cmd_str);
+
+    let mut output = Command::new("bash")
+        .arg("-c")
+        .arg(&cmd_str)
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+        .expect("Failed to start the service call process");
+
+    let stdout: tokio::process::ChildStdout = output
+        .stdout
+        .take()
+        .expect("child did not have a handle to stdout");
+
+    let stderr: tokio::process::ChildStderr = output
+        .stderr
+        .take()
+        .expect("child did not have a handle to stderr");
+
+    // emit the output to the frontend
+    tokio::spawn(async move {
+        let reader = BufReader::new(stdout);
+        let mut lines = reader.lines();
+
+        while let Ok(Some(line)) = lines.next_line().await {
+            window.emit("ros2-service-call-output", line).unwrap();
+        }
+
+        let err_reader = BufReader::new(stderr);
+        let mut err_lines = err_reader.lines();
+
+        while let Ok(Some(line)) = err_lines.next_line().await {
+            window.emit("ros2-service-call-output", line).unwrap();
+        }
+    });
+
+    // Store the child process reference
+    let mut process_handle = service_process.lock().unwrap();
+    *process_handle = Some(output);
+    println!(
+        "Process handle id for topic publish: {}",
+        process_handle.as_ref().unwrap().id().unwrap()
+    );
+
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn kill_topic_pub() -> Result<(), String> {
+    let child_opt = {
+        let mut pub_process_handle = match TOPIC_PUBLISH_PROCESS.lock() {
+            Ok(handle) => handle,
+            Err(poisoned) => poisoned.into_inner(),
+        };
+        pub_process_handle.take()
+    };
+
+    if let Some(mut child) = child_opt {
+        println!("Killing the publish process... {}", child.id().unwrap());
+
+        // Kill the main bash process
+        match child.kill().await {
+            Ok(_) => println!("Successfully killed the main bash process"),
+            Err(e) => eprintln!("Failed to kill the main bash process: {}", e),
+        }
+
+        // Wait for the child process to finish
+        let _ = child.wait().await;
+    } else {
+        eprintln!("No publish process found");
+    }
+
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn kill_service_call() -> Result<(), String> {
+    let child_opt = {
+        let mut call_process_handle = match SERVICE_CALL_PROCESS.lock() {
+            Ok(handle) => handle,
+            Err(poisoned) => poisoned.into_inner(),
+        };
+        call_process_handle.take()
+    };
+
+    if let Some(mut child) = child_opt {
+        println!(
+            "Killing the service call process... {}",
+            child.id().unwrap()
+        );
+
+        // Kill the main bash process
+        match child.kill().await {
+            Ok(_) => println!("Successfully killed the main bash process"),
+            Err(e) => eprintln!("Failed to kill the main bash process: {}", e),
+        }
+
+        // Wait for the child process to finish
+        let _ = child.wait().await;
+    } else {
+        eprintln!("No service call process found");
+    }
+
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn find_all_ros_message_types(autoware_path: String) -> Result<String, String> {
+    let cmd_str = format!(
+        "source /opt/ros/humble/setup.bash && \
+         source {}/install/setup.bash && \
+         ros2 interface list -m",
+        autoware_path
+    );
+
+    println!("Running command: {}", cmd_str);
+
+    let output = Command::new("bash")
+        .arg("-c")
+        .arg(&cmd_str)
+        .output()
+        .await
+        .map_err(|e| e.to_string())?;
+
+    if !output.status.success() {
+        return Err(String::from_utf8_lossy(&output.stderr).to_string());
+    }
+
+    let output_str = String::from_utf8_lossy(&output.stdout).to_string();
+
+    // remove Messages: from the string and trim the whitespace
+    let output_str = output_str.replace("Messages:", "").trim().to_string();
+
+    Ok(output_str)
 }
