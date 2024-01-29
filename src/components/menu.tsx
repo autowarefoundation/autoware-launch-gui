@@ -9,8 +9,10 @@ import {
   Maximize2,
   Minimize2,
   Network,
+  PhoneCall,
   Play,
   Rocket,
+  Send,
   Video,
   X,
 } from "lucide-react";
@@ -70,6 +72,12 @@ export function Menu() {
           case "3":
             setTab("topics");
             break;
+          case "4":
+            setTab("publish");
+            break;
+          case "5":
+            setTab("service");
+            break;
           case "`":
             SSHDialogTriggerRef.current?.click();
             break;
@@ -105,7 +113,7 @@ export function Menu() {
               Menu <ChevronDown className="h-4 w-4" />
             </Button>
           </MenubarTrigger>
-          <MenubarContent className="flex flex-col gap-2">
+          <MenubarContent className="flex flex-col gap-1">
             <MenubarItem
               className="flex items-center gap-2"
               onClick={() => {
@@ -113,7 +121,7 @@ export function Menu() {
               }}
             >
               <Network className="h-4 w-4" />
-              <span className="font-mono text-sm">SSH connection</span>
+              <span className="font-mono text-xs">SSH connection</span>
               <MenubarShortcut>CTRL+`</MenubarShortcut>
             </MenubarItem>
             <MenubarSeparator />
@@ -122,7 +130,7 @@ export function Menu() {
               onClick={() => setTab("launch")}
             >
               <Rocket className="h-4 w-4" />
-              <span className="font-mono text-sm">Launch</span>
+              <span className="font-mono text-xs">Launch</span>
               <MenubarShortcut>CTRL+1</MenubarShortcut>
             </MenubarItem>
             <MenubarSeparator />
@@ -131,7 +139,7 @@ export function Menu() {
               onClick={() => setTab("rosbag")}
             >
               <Play className="h-4 w-4" />
-              <span className="font-mono text-sm">Rosbag Play</span>
+              <span className="font-mono text-xs">Rosbag Play</span>
               <MenubarShortcut>CTRL+2</MenubarShortcut>
             </MenubarItem>
             <MenubarSeparator />
@@ -140,8 +148,26 @@ export function Menu() {
               onClick={() => setTab("topics")}
             >
               <Video className="h-4 w-4" />
-              <span className="font-mono text-sm">Topics / Rosbag Record</span>
+              <span className="font-mono text-xs">Topics / Rosbag Record</span>
               <MenubarShortcut>CTRL+3</MenubarShortcut>
+            </MenubarItem>
+            <MenubarSeparator />
+            <MenubarItem
+              className="flex items-center gap-2"
+              onClick={() => setTab("publish")}
+            >
+              <Send className="h-4 w-4" />
+              <span className="font-mono text-xs">Topic Publish</span>
+              <MenubarShortcut>CTRL+4</MenubarShortcut>
+            </MenubarItem>
+            <MenubarSeparator />
+            <MenubarItem
+              className="flex items-center gap-2"
+              onClick={() => setTab("service")}
+            >
+              <PhoneCall className="h-4 w-4" />
+              <span className="font-mono text-xs">Service Call</span>
+              <MenubarShortcut>CTRL+5</MenubarShortcut>
             </MenubarItem>
             <MenubarSeparator />
             <MenubarItem
@@ -151,7 +177,7 @@ export function Menu() {
               }}
             >
               <Info className="h-4 w-4" />
-              <span className="font-mono text-sm">About</span>
+              <span className="font-mono text-xs">About</span>
             </MenubarItem>
             <MenubarSeparator />
             <MenubarItem
@@ -168,12 +194,12 @@ export function Menu() {
               {isMaximized ? (
                 <>
                   <Minimize2 className="h-4 w-4" />
-                  <span className="font-mono text-sm">Minimize</span>
+                  <span className="font-mono text-xs">Minimize</span>
                 </>
               ) : (
                 <>
                   <Maximize2 className="h-4 w-4" />
-                  <span className="font-mono text-sm">Maximize</span>
+                  <span className="font-mono text-xs">Maximize</span>
                 </>
               )}
             </MenubarItem>
@@ -183,7 +209,7 @@ export function Menu() {
               onClick={() => window.close()}
             >
               <X className="h-4 w-4" />
-              <span className="font-mono text-sm">Quit</span>
+              <span className="font-mono text-xs">Quit</span>
               <MenubarShortcut>CTRL+Q</MenubarShortcut>
             </MenubarItem>
           </MenubarContent>
