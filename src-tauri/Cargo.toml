@@ -1,6 +1,6 @@
 [package]
 name = "autoware-launch-gui"
-version = "1.0.3"
+version = "1.0.4"
 description = "A GUI for launching Autoware packages"
 authors = ["Khalil Selyan"]
 license = "MIT"
