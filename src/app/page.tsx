@@ -36,6 +36,20 @@ const TopicsBagRecord = dynamic(
   }
 );
 
+const TopicPublish = dynamic(
+  () => import("@/components/tabComponents/TopicPublish"),
+  {
+    ssr: false,
+  }
+);
+
+export const ServiceCall = dynamic(
+  () => import("@/components/tabComponents/ServiceCall"),
+  {
+    ssr: false,
+  }
+);
+
 export default function App() {
   const [autowareFolderPath, setAutowareFolderPath] = useAtom(
     autowareFolderPathAtom
@@ -100,6 +114,8 @@ export default function App() {
       {tab === "launch" ? <LaunchMainEntry /> : null}
       {tab === "rosbag" ? <RosbagPlayer /> : null}
       {tab === "topics" ? <TopicsBagRecord /> : null}
+      {tab === "publish" ? <TopicPublish /> : null}
+      {tab === "service" ? <ServiceCall /> : null}
     </div>
   );
 }
