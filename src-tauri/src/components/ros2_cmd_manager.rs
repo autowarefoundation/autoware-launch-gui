@@ -671,8 +671,6 @@ pub async fn find_all_ros_message_types(autoware_path: String) -> Result<String,
         autoware_path
     );
 
-    println!("Running command: {}", cmd_str);
-
     let output = Command::new("bash")
         .arg("-c")
         .arg(&cmd_str)
