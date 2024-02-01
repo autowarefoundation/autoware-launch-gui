@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { invoke } from "@tauri-apps/api/tauri";
+import { invoke } from "@tauri-apps/api";
 import { open } from "@tauri-apps/plugin-dialog";
 import { useAtom } from "jotai";
 
@@ -14,6 +14,7 @@ import {
   launchLogsErrorAtom,
   launchLogsInfoAtom,
   launchLogsWarnAtom,
+  multipleWorkspacePathsAtom,
   parsedLaunchFilePathAtom,
   parsedLaunchFilesAtom,
   pidsLengthAtom,
@@ -121,6 +122,7 @@ const Launch = () => {
   const [userEditedArgs, setUserEditedArgs] = useAtom(userEditedArgsAtom);
 
   const [autowarePath] = useAtom(autowareFolderPathAtom);
+  const [extraWorkspacePaths] = useAtom(multipleWorkspacePathsAtom);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const [autowareProcessesNames, _setAutowareProcessesNames] = useAtom(
@@ -408,6 +410,7 @@ const Launch = () => {
             payload: {
               path: autowarePath,
               launchFile: launchFilePath,
+              extraWorkspaces: extraWorkspacePaths,
               argsToLaunch,
             },
           });

@@ -23,6 +23,7 @@ pub struct ArgsToLaunch {
 pub async fn launch_autoware(
     window: tauri::Window<Wry>,
     path: String,
+    extra_workspaces: Vec<String>,
     launch_file: String,
     args_to_launch: Vec<ArgsToLaunch>,
 ) {
@@ -37,13 +38,23 @@ pub async fn launch_autoware(
         .collect::<Vec<String>>()
         .join(" ");
 
+    // Construct the command string dynamically based on the provided extra workspaces
+    let mut source_extra_workspaces_str = String::new();
+    for workspace in extra_workspaces {
+        source_extra_workspaces_str
+            .push_str(&format!("source {}/install/setup.bash && ", workspace));
+    }
+
     // Construct the full command string
     let cmd_str = format!(
         "source /opt/ros/humble/setup.bash && \
          source {}/install/setup.bash && \
+         {} \
          ros2 launch autoware_launch {} {}",
-        path, launch_file, cmd_args
+        path, source_extra_workspaces_str, launch_file, cmd_args
     );
+
+    println!("Autoware command: {}", cmd_str);
 
     // Execute the command with stdout piped
     let mut child = Command::new("bash")
