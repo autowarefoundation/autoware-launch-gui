@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { invoke } from "@tauri-apps/api/tauri";
+import { invoke } from "@tauri-apps/api";
 import { open, save } from "@tauri-apps/plugin-dialog";
 import { useAtom } from "jotai";
 import { z } from "zod";
