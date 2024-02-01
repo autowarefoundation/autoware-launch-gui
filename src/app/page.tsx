@@ -2,7 +2,7 @@
 
 import React from "react";
 import dynamic from "next/dynamic";
-import { invoke } from "@tauri-apps/api/tauri";
+import { invoke } from "@tauri-apps/api";
 import { useAtom } from "jotai";
 
 import {
@@ -45,6 +45,13 @@ const TopicPublish = dynamic(
 
 export const ServiceCall = dynamic(
   () => import("@/components/tabComponents/ServiceCall"),
+  {
+    ssr: false,
+  }
+);
+
+export const Settings = dynamic(
+  () => import("@/components/tabComponents/Settings"),
   {
     ssr: false,
   }
@@ -116,6 +123,7 @@ export default function App() {
       {tab === "topics" ? <TopicsBagRecord /> : null}
       {tab === "publish" ? <TopicPublish /> : null}
       {tab === "service" ? <ServiceCall /> : null}
+      {tab === "settings" ? <Settings /> : null}
     </div>
   );
 }

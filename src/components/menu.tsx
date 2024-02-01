@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useAtom } from "jotai";
 import {
-  Cable,
   ChevronDown,
   Info,
   Maximize2,
@@ -13,6 +12,7 @@ import {
   Play,
   Rocket,
   Send,
+  Settings,
   Video,
   X,
 } from "lucide-react";
@@ -77,6 +77,9 @@ export function Menu() {
             break;
           case "5":
             setTab("service");
+            break;
+          case "Escape":
+            setTab("settings");
             break;
           case "`":
             SSHDialogTriggerRef.current?.click();
@@ -202,6 +205,17 @@ export function Menu() {
                   <span className="font-mono text-xs">Maximize</span>
                 </>
               )}
+            </MenubarItem>
+            <MenubarSeparator />
+            <MenubarItem
+              className="flex items-center gap-2"
+              onClick={() => {
+                setTab("settings");
+              }}
+            >
+              <Settings className="h-4 w-4" />
+              <span className="font-mono text-xs">Settings</span>
+              <MenubarShortcut>CTRL+ESC</MenubarShortcut>
             </MenubarItem>
             <MenubarSeparator />
             <MenubarItem
