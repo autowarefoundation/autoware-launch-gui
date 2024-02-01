@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { invoke } from "@tauri-apps/api/tauri";
+import { invoke } from "@tauri-apps/api";
 import { open } from "@tauri-apps/plugin-dialog";
 import { useAtom, useAtomValue } from "jotai";
 import { Loader2 } from "lucide-react";
@@ -15,6 +15,7 @@ import {
   bagFileAtom,
   bagFileInfoAtom,
   isBagPlayingAtom,
+  multipleWorkspacePathsAtom,
   userEditedBagPlayFlagsAtom,
 } from "@/app/jotai/atoms";
 
@@ -51,6 +52,9 @@ const RosbagPlayer = () => {
   const [isLoadingInfo, setIsLoadingInfo] = useState(false); // TODO: use this to show a loading spinner while waiting for bag info
   const [isPlaying, setIsPlaying] = useAtom(isBagPlayingAtom);
   const autowareFolderPath = useAtomValue(autowareFolderPathAtom);
+  const [extraWorkspacePaths, setExtraWorkspacePaths] = useAtom(
+    multipleWorkspacePathsAtom
+  );
   const userEditedBagPlayFlags = useAtomValue(userEditedBagPlayFlagsAtom);
 
   const { toast } = useToast();
@@ -71,6 +75,7 @@ const RosbagPlayer = () => {
           payload: {
             path: file.path,
             autowarePath: autowareFolderPath,
+            extraWorkspaces: extraWorkspacePaths,
           },
         });
 
@@ -94,6 +99,7 @@ const RosbagPlayer = () => {
       payload: {
         path: selectedFile?.path,
         autowarePath: autowareFolderPath,
+        extraWorkspaces: extraWorkspacePaths,
         flags: userEditedBagPlayFlags,
       },
     });

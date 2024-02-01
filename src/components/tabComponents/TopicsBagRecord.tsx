@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { invoke } from "@tauri-apps/api/tauri";
+import { invoke } from "@tauri-apps/api";
 import { useAtom } from "jotai";
 
 import { cn } from "@/lib/utils";
@@ -9,6 +9,7 @@ import type { GroupedTopics, TopicsAndTypes } from "@/app/jotai/atoms";
 import {
   autowareFolderPathAtom,
   isBagRecordingAtom,
+  multipleWorkspacePathsAtom,
   selectedTopicsAtom,
   topicEchoAtom,
   topicListAtom,
@@ -50,6 +51,9 @@ const TopicsBagRecord = () => {
   const [topicEcho, setTopicEcho] = useAtom(topicEchoAtom);
   const [bagRecordLog, setBagRecordLog] = useState<string[]>([]);
   const [autowarePath, setAutowarePath] = useAtom(autowareFolderPathAtom);
+  const [extraWorkspacePaths, setExtraWorkspacePaths] = useAtom(
+    multipleWorkspacePathsAtom
+  );
   const [userEditedBagRecordFlags, setUserEditedBagRecordFlags] = useAtom(
     userEditedBagRecordFlagsAtom
   );
@@ -152,6 +156,7 @@ const TopicsBagRecord = () => {
           topic: selectedTopics[0].topicName,
           topicType: selectedTopics[0].type,
           autowarePath,
+          extraWorkspaces: extraWorkspacePaths,
         },
       });
 
@@ -179,6 +184,7 @@ const TopicsBagRecord = () => {
         topics: selectedTopics.map((topic) => topic.topicName),
         autowarePath,
         flags: userEditedBagRecordFlags,
+        extraWorkspaces: extraWorkspacePaths,
       },
     });
 
