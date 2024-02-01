@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { invoke } from "@tauri-apps/api/tauri";
+import { invoke } from "@tauri-apps/api";
 import { useAtom } from "jotai";
 import { Check, ChevronsUpDown } from "lucide-react";
 
@@ -36,6 +36,7 @@ import {
 } from "@/components/ui/tooltip";
 import {
   autowareFolderPathAtom,
+  multipleWorkspacePathsAtom,
   topicListAtom,
   TopicsAndTypes,
   userEditedTopicPubFlagsAtom,
@@ -95,6 +96,9 @@ export function formatForRos2Pub(input: string): string {
 const TopicPublish = () => {
   const [topics, setTopics] = useAtom(topicListAtom);
   const [autowarePath, setAutowarePath] = useAtom(autowareFolderPathAtom);
+  const [extraWorkspacePaths, setExtraWorkspacePaths] = useAtom(
+    multipleWorkspacePathsAtom
+  );
   const [selectedTopic, setSelectedTopic] =
     useState<TopicsAndTypes>(EMPTY_TOPIC);
 
@@ -126,6 +130,7 @@ const TopicPublish = () => {
     const messageTypes = (await invoke("find_all_ros_message_types", {
       payload: {
         autowarePath,
+        extraWorkspaces: extraWorkspacePaths,
       },
     })) as string;
 
@@ -157,6 +162,7 @@ const TopicPublish = () => {
         payload: {
           messageType: messageType,
           autowarePath,
+          extraWorkspaces: extraWorkspacePaths,
         },
       })) as string;
 
@@ -176,6 +182,7 @@ const TopicPublish = () => {
         message: flattenedMessageWithNoExtraLines,
         flags: userEditedTopicPubFlags,
         autowarePath,
+        extraWorkspaces: extraWorkspacePaths,
       },
     });
 

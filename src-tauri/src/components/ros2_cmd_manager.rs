@@ -43,16 +43,23 @@ pub async fn start_topic_echo(
     topic: String,
     topic_type: String,
     autoware_path: String,
+    extra_workspaces: Vec<String>,
     window: tauri::Window<Wry>,
 ) -> Result<(), String> {
     let window_clone = window.clone();
 
     tokio::task::spawn(async move {
+        let mut source_extra_workspaces_str = String::new();
+        for workspace in extra_workspaces {
+            source_extra_workspaces_str
+                .push_str(&format!("source {}/install/setup.bash && ", workspace));
+        }
         let cmd_str = format!(
             "source /opt/ros/humble/setup.bash && \
              source {}/install/setup.bash && \
+             {} \
              ros2 topic echo {} {}",
-            autoware_path, topic, topic_type
+            autoware_path, source_extra_workspaces_str, topic, topic_type
         );
 
         println!("Running command: {}", cmd_str);
@@ -100,6 +107,7 @@ pub async fn start_topic_echo(
 pub async fn start_bag_record(
     topics: Vec<String>,
     autoware_path: String,
+    extra_workspaces: Vec<String>,
     flags: Vec<Flag>,
     window: tauri::Window<Wry>,
 ) -> Result<(), String> {
@@ -127,12 +135,19 @@ pub async fn start_bag_record(
         }
     }
 
+    let mut source_extra_workspaces_str = String::new();
+    for workspace in extra_workspaces {
+        source_extra_workspaces_str
+            .push_str(&format!("source {}/install/setup.bash && ", workspace));
+    }
+
     let mut cmd_str = format!(
         "source /opt/ros/humble/setup.bash && \
          source {}/install/setup.bash && \
+         {} \
          cd ~ && \
          ros2 bag record",
-        autoware_path
+        autoware_path, source_extra_workspaces_str
     );
 
     if !all_flag && !topics.is_empty() {
@@ -259,17 +274,26 @@ pub async fn launch_tool(
     tool: String,
     command: String,
     autoware_path: String,
+    extra_workspaces: Vec<String>,
     window: tauri::Window<Wry>,
 ) -> Result<(), String> {
     let window_clone = window.clone();
 
     tokio::task::spawn(async move {
         let pids = Arc::clone(&CALIBRATION_PIDS);
+
+        let mut source_extra_workspaces_str = String::new();
+        for workspace in extra_workspaces {
+            source_extra_workspaces_str
+                .push_str(&format!("source {}/install/setup.bash && ", workspace));
+        }
+
         let cmd_str = format!(
             "source /opt/ros/humble/setup.bash && \
              source {}/install/setup.bash && \
+             {} \
              {}",
-            autoware_path, command
+            autoware_path, source_extra_workspaces_str, command
         );
 
         println!("Running command: {}", cmd_str);
@@ -413,13 +437,21 @@ pub async fn kill_calibration_tool(
 pub async fn get_message_interface(
     message_type: String,
     autoware_path: String,
+    extra_workspaces: Vec<String>,
 ) -> Result<String, String> {
+    let mut source_extra_workspaces_str = String::new();
+    for workspace in extra_workspaces {
+        source_extra_workspaces_str
+            .push_str(&format!("source {}/install/setup.bash && ", workspace));
+    }
+
     // Execute the `ros2 interface proto x` command
     let cmd_str = format!(
         "source /opt/ros/humble/setup.bash && \
          source {}/install/setup.bash && \
+         {} \
          ros2 interface proto {} --no-quotes",
-        autoware_path, message_type
+        autoware_path, source_extra_workspaces_str, message_type
     );
 
     let output = Command::new("bash")
@@ -445,6 +477,7 @@ pub async fn publish_message(
     message: String,
     flags: Vec<Flag>,
     autoware_path: String,
+    extra_workspaces: Vec<String>,
     window: tauri::Window<Wry>,
 ) -> Result<(), String> {
     let publish_process = Arc::clone(&TOPIC_PUBLISH_PROCESS);
@@ -466,12 +499,18 @@ pub async fn publish_message(
             }
         }
     }
+    let mut source_extra_workspaces_str = String::new();
+    for workspace in extra_workspaces {
+        source_extra_workspaces_str
+            .push_str(&format!("source {}/install/setup.bash && ", workspace));
+    }
 
     let mut cmd_str = format!(
         "source /opt/ros/humble/setup.bash && \
          source {}/install/setup.bash && \
+         {} \
          ros2 topic pub {} {} {}",
-        autoware_path, topic, message_type, message
+        autoware_path, source_extra_workspaces_str, topic, message_type, message
     );
 
     cmd_str.push_str(&cmd_flags);
@@ -531,6 +570,7 @@ pub async fn call_service(
     request: String,
     flag: Flag,
     autoware_path: String,
+    extra_workspaces: Vec<String>,
     window: tauri::Window<Wry>,
 ) -> Result<(), String> {
     let service_process = Arc::clone(&SERVICE_CALL_PROCESS);
@@ -546,11 +586,18 @@ pub async fn call_service(
         _ => {}
     }
 
+    let mut source_extra_workspaces_str = String::new();
+    for workspace in extra_workspaces {
+        source_extra_workspaces_str
+            .push_str(&format!("source {}/install/setup.bash && ", workspace));
+    }
+
     let mut cmd_str = format!(
         "source /opt/ros/humble/setup.bash && \
          source {}/install/setup.bash && \
+         {} \
          ros2 service call {} {} {}",
-        autoware_path, service_name, service_type, request
+        autoware_path, source_extra_workspaces_str, service_name, service_type, request
     );
 
     cmd_str.push_str(&cmd_flag);
@@ -663,12 +710,21 @@ pub async fn kill_service_call() -> Result<(), String> {
 }
 
 #[tauri::command]
-pub async fn find_all_ros_message_types(autoware_path: String) -> Result<String, String> {
+pub async fn find_all_ros_message_types(
+    autoware_path: String,
+    extra_workspaces: Vec<String>,
+) -> Result<String, String> {
+    let mut source_extra_workspaces_str = String::new();
+    for workspace in extra_workspaces {
+        source_extra_workspaces_str
+            .push_str(&format!("source {}/install/setup.bash && ", workspace));
+    }
     let cmd_str = format!(
         "source /opt/ros/humble/setup.bash && \
          source {}/install/setup.bash && \
+         {} \
          ros2 interface list -m",
-        autoware_path
+        autoware_path, source_extra_workspaces_str
     );
 
     let output = Command::new("bash")
