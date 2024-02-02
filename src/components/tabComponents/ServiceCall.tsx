@@ -2,7 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import { CheckedState } from "@radix-ui/react-checkbox";
-import { invoke } from "@tauri-apps/api";
+import { invoke } from "@tauri-apps/api/core";
+import { listen } from "@tauri-apps/api/event";
 import { useAtom } from "jotai";
 
 import { cn } from "@/lib/utils";
@@ -56,9 +57,7 @@ const ServiceCall = () => {
   };
 
   const getServices = async () => {
-    const topicsWithTypes = (await invoke("get_services", {
-      payload: {},
-    })) as string[];
+    const topicsWithTypes = (await invoke("get_services", {})) as string[];
     const topicsAndTypes = topicsWithTypes.map((topicWithType) => {
       const [topic, type] = topicWithType.split(" ");
       return { topicName: topic, type };
@@ -70,11 +69,9 @@ const ServiceCall = () => {
   const getMessageInterface = async (topic: TopicsAndTypes) => {
     try {
       const messageInterface = (await invoke("get_message_interface", {
-        payload: {
-          messageType: topic.type,
-          autowarePath,
-          extraWorkspaces: extraWorkspacePaths,
-        },
+        messageType: topic.type,
+        autowarePath,
+        extraWorkspaces: extraWorkspacePaths,
       })) as string;
 
       const checkForEmptyObjectMessage = messageInterface.trim() === "{}";
@@ -92,34 +89,28 @@ const ServiceCall = () => {
       textAreaRef.current!.value.replaceAll("\n", " ");
 
     await invoke("call_service", {
-      payload: {
-        serviceName: selectedService.topicName,
-        serviceType: selectedService.type,
-        request: flattenedMessageWithNoExtraLines,
-        flag: {
-          arg: rate.arg,
-          value: rate.isActivated ? rate.value : "",
-        },
-        autowarePath,
-        extraWorkspaces: extraWorkspacePaths,
+      serviceName: selectedService.topicName,
+      serviceType: selectedService.type,
+      request: flattenedMessageWithNoExtraLines,
+      flag: {
+        arg: rate.arg,
+        value: rate.isActivated ? rate.value : "",
       },
+      autowarePath,
+      extraWorkspaces: extraWorkspacePaths,
     });
     setServiceOutput(() => ["Called service: ", selectedService.topicName]);
   };
 
   const killService = async () => {
-    await invoke("kill_service_call", {
-      payload: {},
-    });
+    await invoke("kill_service_call", {});
     setServiceOutput((prev) => [...prev, "Killed service call"]);
   };
 
   useEffect(() => {
     getServices();
     async function getServiceCallOutput() {
-      const { appWindow } = await import("@tauri-apps/plugin-window");
-
-      const unlistenServiceCallOutput = await appWindow.listen<string>(
+      const unlistenServiceCallOutput = await listen<string>(
         "ros2-service-call-output",
         (output) => {
           setServiceOutput((prev) => [...prev, output.payload]);

@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { invoke } from "@tauri-apps/api";
+import { invoke } from "@tauri-apps/api/core";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -284,10 +284,8 @@ export function YamlArgsDialog({
 
     // call the save_edits_yaml function
     await invoke("save_edits_yaml", {
-      payload: {
-        path,
-        newYamlArgs: updatedArgsArr,
-      },
+      path,
+      newYamlArgs: updatedArgsArr,
     });
 
     // Reset the config path so that the config is reloaded
@@ -404,10 +402,8 @@ export function YamlArgsDialog({
 
       // Send the updated args to the Rust side
       await invoke("save_edits_yaml", {
-        payload: {
-          path,
-          newYamlArgs: updatedArgsArr,
-        },
+        path,
+        newYamlArgs: updatedArgsArr,
       });
 
       setConfigPath("");

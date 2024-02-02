@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { invoke } from "@tauri-apps/api";
+import { invoke } from "@tauri-apps/api/core";
+import { listen } from "@tauri-apps/api/event";
 import { useAtom } from "jotai";
 
 import { cn } from "@/lib/utils";
@@ -61,9 +62,7 @@ const TopicsBagRecord = () => {
   const { toast } = useToast();
 
   const getTopics = async () => {
-    const topicsWithTypes = (await invoke("get_topics", {
-      payload: {},
-    })) as string[];
+    const topicsWithTypes = (await invoke("get_topics", {})) as string[];
     const topicsAndTypes = topicsWithTypes.map((topicWithType) => {
       const [topic, type] = topicWithType.split(" ");
       return { topicName: topic, type };
@@ -82,9 +81,7 @@ const TopicsBagRecord = () => {
 
   useEffect(() => {
     async function init() {
-      const { appWindow } = await import("@tauri-apps/plugin-window");
-
-      const unlistenTopicEcho = await appWindow.listen(
+      const unlistenTopicEcho = await listen(
         "ros2-topic-echo-output",
         (data) => {
           const echoOutput = data.payload as string;
@@ -99,7 +96,7 @@ const TopicsBagRecord = () => {
         }
       );
 
-      const unlistenBagRecord = await appWindow.listen(
+      const unlistenBagRecord = await listen(
         "ros2-bag-record-output",
         (data) => {
           const bagRecordOutput = data.payload as string;
@@ -114,29 +111,23 @@ const TopicsBagRecord = () => {
         }
       );
 
-      const unlistenEchoKilled = await appWindow.listen(
-        "topic-echo-killed",
-        () => {
-          setIsEchoing(false);
-          toast({
-            title: "Topic Echo Killed",
-            description: "Topic Echo has been killed.",
-            variant: "destructive",
-          });
-        }
-      );
+      const unlistenEchoKilled = await listen("topic-echo-killed", () => {
+        setIsEchoing(false);
+        toast({
+          title: "Topic Echo Killed",
+          description: "Topic Echo has been killed.",
+          variant: "destructive",
+        });
+      });
 
-      const unlistenBagRecordKilled = await appWindow.listen(
-        "bag-record-killed",
-        () => {
-          setIsRecording(false);
-          toast({
-            title: "Bag Record Killed",
-            description: "Bag Record has been killed.",
-            variant: "destructive",
-          });
-        }
-      );
+      const unlistenBagRecordKilled = await listen("bag-record-killed", () => {
+        setIsRecording(false);
+        toast({
+          title: "Bag Record Killed",
+          description: "Bag Record has been killed.",
+          variant: "destructive",
+        });
+      });
 
       await getTopics();
       return () => {
@@ -152,12 +143,10 @@ const TopicsBagRecord = () => {
   const handleTopicEcho = async () => {
     if (selectedTopics.length === 1) {
       await invoke("start_topic_echo", {
-        payload: {
-          topic: selectedTopics[0].topicName,
-          topicType: selectedTopics[0].type,
-          autowarePath,
-          extraWorkspaces: extraWorkspacePaths,
-        },
+        topic: selectedTopics[0].topicName,
+        topicType: selectedTopics[0].type,
+        autowarePath,
+        extraWorkspaces: extraWorkspacePaths,
       });
 
       setTopicEcho([]);
@@ -165,9 +154,7 @@ const TopicsBagRecord = () => {
   };
 
   const handleKillEcho = async () => {
-    await invoke("kill_topic_echo", {
-      payload: {},
-    });
+    await invoke("kill_topic_echo", {});
   };
 
   const handleClearLog = () => {
@@ -177,15 +164,12 @@ const TopicsBagRecord = () => {
   const handleRecordBag = async () => {
     setIsRecording(true);
     await invoke("start_bag_record", {
-      payload: {
-        bagName: userEditedBagRecordFlags.find(
-          (flag) => flag.arg === "--output"
-        )?.value,
-        topics: selectedTopics.map((topic) => topic.topicName),
-        autowarePath,
-        flags: userEditedBagRecordFlags,
-        extraWorkspaces: extraWorkspacePaths,
-      },
+      bagName: userEditedBagRecordFlags.find((flag) => flag.arg === "--output")
+        ?.value,
+      topics: selectedTopics.map((topic) => topic.topicName),
+      autowarePath,
+      flags: userEditedBagRecordFlags,
+      extraWorkspaces: extraWorkspacePaths,
     });
 
     setBagRecordLog([]);
@@ -193,9 +177,7 @@ const TopicsBagRecord = () => {
 
   const handleStopRecording = async () => {
     setIsRecording(false);
-    await invoke("kill_bag_record", {
-      payload: {},
-    });
+    await invoke("kill_bag_record", {});
 
     setUserEditedBagRecordFlags((prev) => {
       const outputFlag = prev.find((flag) => flag.arg === "--output");

@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { invoke } from "@tauri-apps/api";
+import { invoke } from "@tauri-apps/api/core";
 import { open, save } from "@tauri-apps/plugin-dialog";
 import { useAtom } from "jotai";
 import { z } from "zod";
@@ -107,11 +107,9 @@ export function ProfileSetup() {
 
     //   we send this data to the backend to save the profile in a json file in the profilePath the user chose
     await invoke("save_profile", {
-      payload: {
-        //   if no extension is provided, add .json to the path
-        profilePath: addJsonIfNotPresent(profilePath),
-        profileData,
-      },
+      //   if no extension is provided, add .json to the path
+      profilePath: addJsonIfNotPresent(profilePath),
+      profileData,
     });
 
     //   we add the path to the last saved/loaded profiles list
@@ -148,9 +146,7 @@ export function ProfileSetup() {
     //  we send this data to the backend to load the profile from the json file in the profilePath
     //  the user chose
     const rawData = await invoke("load_profile", {
-      payload: {
-        path: profilePath.path,
-      },
+      path: profilePath.path,
     });
     const result = ProfileDataSchema.safeParse(rawData);
     if (!result.success) {
@@ -180,9 +176,7 @@ export function ProfileSetup() {
 
     if (launchFilePath !== "") {
       await invoke("parse_and_send_xml", {
-        payload: {
-          path: launchFilePath,
-        },
+        path: launchFilePath,
       });
     }
     if (pathToLastSavedLoadedProfiles.includes(profilePath.path)) {
@@ -199,9 +193,7 @@ export function ProfileSetup() {
     setProfilePath(profilePath);
 
     const rawData = await invoke("load_profile", {
-      payload: {
-        path: profilePath,
-      },
+      path: profilePath,
     });
     const result = ProfileDataSchema.safeParse(rawData);
 
@@ -232,9 +224,7 @@ export function ProfileSetup() {
 
     if (launchFilePath !== "") {
       await invoke("parse_and_send_xml", {
-        payload: {
-          path: launchFilePath,
-        },
+        path: launchFilePath,
       });
     }
     if (pathToLastSavedLoadedProfiles.includes(profilePath)) {

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { invoke } from "@tauri-apps/api";
+import { invoke } from "@tauri-apps/api/core";
 import { useAtom } from "jotai";
 
 import {
@@ -49,18 +49,14 @@ export default function SSHComponent() {
       setIsLoading(true);
       // First, try to establish an SSH connection
       const connectResponse = await invoke("connect_ssh", {
-        payload: {
-          host,
-          username: user,
-          password,
-        },
+        host,
+        username: user,
+        password,
       });
 
       // If the SSH connection is established, start the shell session
       if (connectResponse === "SSH connection established") {
-        const shellResponse = await invoke("start_shell_session", {
-          payload: {},
-        });
+        const shellResponse = await invoke("start_shell_session", {});
         setIsLoading(false);
         setIsConnected(true);
         toast({
@@ -99,7 +95,7 @@ export default function SSHComponent() {
   //     console.log("Executing SSH command:", command);
   //     // Corrected invoke call
   //     const result = (await invoke("execute_command_in_shell", {
-  //       payload: { command, user, host },
+  //      command, user, host
   //     })) as string;
   //     console.log("Result:", result); // This should now log the result
   //     setOutput((prevOutput) => [...prevOutput, result, "\n\n"]);
@@ -113,7 +109,7 @@ export default function SSHComponent() {
 
   const disconnectSSH = async () => {
     try {
-      const response = await invoke("kill_ssh_connection", { payload: {} });
+      const response = await invoke("kill_ssh_connection", {});
       setIsConnected(false);
       toast({
         title: "SSH Connection",

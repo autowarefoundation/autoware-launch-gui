@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { invoke } from "@tauri-apps/api";
+import { invoke } from "@tauri-apps/api/core";
+import { listen } from "@tauri-apps/api/event";
 import { open } from "@tauri-apps/plugin-dialog";
 import { useAtom, useAtomValue } from "jotai";
 import { Loader2 } from "lucide-react";
@@ -72,11 +73,9 @@ const RosbagPlayer = () => {
         setIsLoadingInfo(true);
 
         const info = await invoke("get_rosbag_info", {
-          payload: {
-            path: file.path,
-            autowarePath: autowareFolderPath,
-            extraWorkspaces: extraWorkspacePaths,
-          },
+          path: file.path,
+          autowarePath: autowareFolderPath,
+          extraWorkspaces: extraWorkspacePaths,
         });
 
         const parsedInfo = bagFileInfoSchema.parse(info);
@@ -96,36 +95,32 @@ const RosbagPlayer = () => {
 
   const handleRosbagPlay = async () => {
     const res = await invoke("play_rosbag", {
-      payload: {
-        path: selectedFile?.path,
-        autowarePath: autowareFolderPath,
-        extraWorkspaces: extraWorkspacePaths,
-        flags: userEditedBagPlayFlags,
-      },
+      path: selectedFile?.path,
+      autowarePath: autowareFolderPath,
+      extraWorkspaces: extraWorkspacePaths,
+      flags: userEditedBagPlayFlags,
     });
   };
 
   const handleRosbagPause = async () => {
-    const res = await invoke("toggle_pause_state", { payload: {} });
+    const res = await invoke("toggle_pause_state", {});
   };
 
   const handleRosbagStop = async () => {
-    const res = await invoke("stop_rosbag_play", { payload: {} });
+    const res = await invoke("stop_rosbag_play", {});
     setIsPlaying(false);
   };
 
   const handleRosbagRate = async () => {
     const res = await invoke("set_rosbag_playback_rate", {
-      payload: { rate: playbackRate },
+      rate: playbackRate,
     });
   };
 
   // listen to rosbag status
   useEffect(() => {
     const init = async () => {
-      const { appWindow } = await import("@tauri-apps/plugin-window");
-
-      const unlistenStatus = await appWindow.listen("rosbag-status", (data) => {
+      const unlistenStatus = await listen("rosbag-status", (data) => {
         const status = data.payload as string;
         if (status !== "unknown")
           toast({
@@ -134,7 +129,7 @@ const RosbagPlayer = () => {
           });
       });
 
-      const unlistenStarted = await appWindow.listen("rosbag-started", () => {
+      const unlistenStarted = await listen("rosbag-started", () => {
         setIsPlaying(true);
 
         toast({
@@ -143,7 +138,7 @@ const RosbagPlayer = () => {
         });
       });
 
-      const unlistenEnded = await appWindow.listen("rosbag-ended", () => {
+      const unlistenEnded = await listen("rosbag-ended", () => {
         setIsPlaying(false);
         setPlaybackRate(1);
 
@@ -153,7 +148,7 @@ const RosbagPlayer = () => {
         });
       });
 
-      const unlistenStopped = await appWindow.listen("rosbag-stopped", () => {
+      const unlistenStopped = await listen("rosbag-stopped", () => {
         setIsPlaying(false);
         setPlaybackRate(1);
 

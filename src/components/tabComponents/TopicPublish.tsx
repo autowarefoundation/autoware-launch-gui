@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { invoke } from "@tauri-apps/api";
+import { invoke } from "@tauri-apps/api/core";
+import { listen } from "@tauri-apps/api/event";
 import { useAtom } from "jotai";
 import { Check, ChevronsUpDown } from "lucide-react";
 
@@ -128,10 +129,8 @@ const TopicPublish = () => {
 
   const getMessageTypesAvailable = async () => {
     const messageTypes = (await invoke("find_all_ros_message_types", {
-      payload: {
-        autowarePath,
-        extraWorkspaces: extraWorkspacePaths,
-      },
+      autowarePath,
+      extraWorkspaces: extraWorkspacePaths,
     })) as string;
 
     const types = messageTypes.split("\n").map((type) => type.trim());
@@ -145,9 +144,7 @@ const TopicPublish = () => {
   };
 
   const getTopics = async () => {
-    const topicsWithTypes = (await invoke("get_topics", {
-      payload: {},
-    })) as string[];
+    const topicsWithTypes = (await invoke("get_topics", {})) as string[];
     const topicsAndTypes = topicsWithTypes.map((topicWithType) => {
       const [topic, type] = topicWithType.split(" ");
       return { topicName: topic, type };
@@ -159,11 +156,9 @@ const TopicPublish = () => {
   const getMessageInterface = async (messageType: string) => {
     try {
       const messageInterface = (await invoke("get_message_interface", {
-        payload: {
-          messageType: messageType,
-          autowarePath,
-          extraWorkspaces: extraWorkspacePaths,
-        },
+        messageType: messageType,
+        autowarePath,
+        extraWorkspaces: extraWorkspacePaths,
       })) as string;
 
       textAreaRef.current!.value = formatForRos2Pub(messageInterface);
@@ -176,23 +171,19 @@ const TopicPublish = () => {
     const flattenedMessageWithNoExtraLines =
       textAreaRef.current!.value.replaceAll("\n", " ");
     await invoke("publish_message", {
-      payload: {
-        topic: selectedTopic.topicName,
-        messageType: selectedTopic.type,
-        message: flattenedMessageWithNoExtraLines,
-        flags: userEditedTopicPubFlags,
-        autowarePath,
-        extraWorkspaces: extraWorkspacePaths,
-      },
+      topic: selectedTopic.topicName,
+      messageType: selectedTopic.type,
+      message: flattenedMessageWithNoExtraLines,
+      flags: userEditedTopicPubFlags,
+      autowarePath,
+      extraWorkspaces: extraWorkspacePaths,
     });
 
     setPublishOutput(() => [`Published to ${selectedTopic.topicName}`]);
   };
 
   const killPublishNode = async () => {
-    await invoke("kill_topic_pub", {
-      payload: {},
-    });
+    await invoke("kill_topic_pub", {});
     setPublishOutput((prev) => [...prev, `Killed topic publisher`]);
   };
 
@@ -200,9 +191,7 @@ const TopicPublish = () => {
     getTopics();
     getMessageTypesAvailable();
     async function getPublishOutput() {
-      const { appWindow } = await import("@tauri-apps/plugin-window");
-
-      const unlistenTopicPubOutput = await appWindow.listen<string>(
+      const unlistenTopicPubOutput = await listen<string>(
         "ros2-topic-pub-output",
         (output) => {
           setPublishOutput((prev) => [...prev, output.payload]);
