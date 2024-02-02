@@ -2,6 +2,7 @@
 
 import { useCallback, useState } from "react";
 import { UpdateIcon } from "@radix-ui/react-icons";
+import { getName, getTauriVersion, getVersion } from "@tauri-apps/api/app";
 import { GithubIcon, HomeIcon } from "lucide-react";
 
 import { Icons } from "./icons";
@@ -29,9 +30,6 @@ export function AboutDialog() {
   const [arc, setArc] = useState("");
 
   const getInfos = useCallback(async () => {
-    const { getName, getTauriVersion, getVersion } = await import(
-      "@tauri-apps/plugin-app"
-    );
     const { arch } = await import("@tauri-apps/plugin-os");
 
     getName && getName().then((x) => setName(x));
