@@ -182,7 +182,7 @@ export function AutowareLaunchDialog(props: AutowareLaunchDialog) {
           }`}
           disabled={pidslen === 0}
         >
-          <span>Launch Logs</span>
+          <span>Logs</span>
           <span className="text-xs opacity-50">({pidslen})</span>
         </Button>
       </DialogTrigger>
