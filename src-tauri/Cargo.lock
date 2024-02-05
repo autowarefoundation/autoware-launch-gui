@@ -215,6 +215,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1181e1e0d1fce796a03db1ae795d67167da795f9cf4a39c37589e85ef57f26d3"
 
 [[package]]
+name = "auto-launch"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5904a4d734f0235edf29aab320a14899f3e090446e594ff96508a6215f76f89c"
+dependencies = [
+ "dirs 4.0.0",
+ "thiserror",
+ "winreg 0.10.1",
+]
+
+[[package]]
 name = "autocfg"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -224,7 +235,7 @@ checksum = "d468802bab17cbc0cc575e9b053f41e72aa36bfa6b7f55e3529ffa43161b97fa"
 name = "autoware-launch-gui"
 version = "1.0.4"
 dependencies = [
- "dirs",
+ "dirs 5.0.1",
  "nix 0.23.2",
  "once_cell",
  "rayon",
@@ -238,6 +249,7 @@ dependencies = [
  "tauri",
  "tauri-build",
  "tauri-plugin-app",
+ "tauri-plugin-autostart",
  "tauri-plugin-dialog",
  "tauri-plugin-fs",
  "tauri-plugin-os",
@@ -768,11 +780,20 @@ dependencies = [
 
 [[package]]
 name = "dirs"
+version = "4.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ca3aa72a6f96ea37bbc5aa912f6788242832f75369bdfdadcb0e38423f100059"
+dependencies = [
+ "dirs-sys 0.3.7",
+]
+
+[[package]]
+name = "dirs"
 version = "5.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "44c45a9d03d6676652bcb5e724c7e988de1acad23a711b5217ab9cbecbec2225"
 dependencies = [
- "dirs-sys",
+ "dirs-sys 0.4.1",
 ]
 
 [[package]]
@@ -783,6 +804,17 @@ checksum = "b98cf8ebf19c3d1b223e151f99a4f9f0690dca41414773390fc824184ac833e1"
 dependencies = [
  "cfg-if",
  "dirs-sys-next",
+]
+
+[[package]]
+name = "dirs-sys"
+version = "0.3.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1b1d1d91c932ef41c0f2663aa8b0ca0342d444d842c06914aa0a7e352d0bada6"
+dependencies = [
+ "libc",
+ "redox_users",
+ "winapi",
 ]
 
 [[package]]
@@ -3588,15 +3620,28 @@ dependencies = [
 [[package]]
 name = "tauri-plugin-app"
 version = "2.0.0-alpha.2"
-source = "git+https://github.com/tauri-apps/plugins-workspace?branch=v2#2409b01fe7cd66164c94c541822be13fb3fdaf37"
+source = "git+https://github.com/tauri-apps/plugins-workspace?rev=2409b01f#2409b01fe7cd66164c94c541822be13fb3fdaf37"
 dependencies = [
  "tauri",
 ]
 
 [[package]]
+name = "tauri-plugin-autostart"
+version = "2.0.0-alpha.2"
+source = "git+https://github.com/tauri-apps/plugins-workspace?rev=2409b01f#2409b01fe7cd66164c94c541822be13fb3fdaf37"
+dependencies = [
+ "auto-launch",
+ "log",
+ "serde",
+ "serde_json",
+ "tauri",
+ "thiserror",
+]
+
+[[package]]
 name = "tauri-plugin-dialog"
 version = "2.0.0-alpha.2"
-source = "git+https://github.com/tauri-apps/plugins-workspace?branch=v2#2409b01fe7cd66164c94c541822be13fb3fdaf37"
+source = "git+https://github.com/tauri-apps/plugins-workspace?rev=2409b01f#2409b01fe7cd66164c94c541822be13fb3fdaf37"
 dependencies = [
  "glib",
  "log",
@@ -3613,7 +3658,7 @@ dependencies = [
 [[package]]
 name = "tauri-plugin-fs"
 version = "2.0.0-alpha.2"
-source = "git+https://github.com/tauri-apps/plugins-workspace?branch=v2#2409b01fe7cd66164c94c541822be13fb3fdaf37"
+source = "git+https://github.com/tauri-apps/plugins-workspace?rev=2409b01f#2409b01fe7cd66164c94c541822be13fb3fdaf37"
 dependencies = [
  "anyhow",
  "glob",
@@ -3626,7 +3671,7 @@ dependencies = [
 [[package]]
 name = "tauri-plugin-os"
 version = "2.0.0-alpha.2"
-source = "git+https://github.com/tauri-apps/plugins-workspace?branch=v2#2409b01fe7cd66164c94c541822be13fb3fdaf37"
+source = "git+https://github.com/tauri-apps/plugins-workspace?rev=2409b01f#2409b01fe7cd66164c94c541822be13fb3fdaf37"
 dependencies = [
  "gethostname",
  "log",
@@ -3642,7 +3687,7 @@ dependencies = [
 [[package]]
 name = "tauri-plugin-shell"
 version = "2.0.0-alpha.2"
-source = "git+https://github.com/tauri-apps/plugins-workspace?branch=v2#2409b01fe7cd66164c94c541822be13fb3fdaf37"
+source = "git+https://github.com/tauri-apps/plugins-workspace?rev=2409b01f#2409b01fe7cd66164c94c541822be13fb3fdaf37"
 dependencies = [
  "encoding_rs",
  "log",
@@ -3659,7 +3704,7 @@ dependencies = [
 [[package]]
 name = "tauri-plugin-window"
 version = "2.0.0-alpha.2"
-source = "git+https://github.com/tauri-apps/plugins-workspace?branch=v2#2409b01fe7cd66164c94c541822be13fb3fdaf37"
+source = "git+https://github.com/tauri-apps/plugins-workspace?rev=2409b01f#2409b01fe7cd66164c94c541822be13fb3fdaf37"
 dependencies = [
  "serde",
  "tauri",

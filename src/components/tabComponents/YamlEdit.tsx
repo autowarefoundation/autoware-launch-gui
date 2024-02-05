@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { invoke } from "@tauri-apps/api/tauri";
+import { invoke } from "@tauri-apps/api";
 import { useAtom } from "jotai";
 
 import { autowareFolderPathAtom } from "@/app/jotai/atoms";

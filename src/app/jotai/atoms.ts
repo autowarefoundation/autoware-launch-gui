@@ -26,12 +26,17 @@ export type GroupedTopics = {
 };
 
 export const tabAtom = atom<
-  "launch" | "rosbag" | "topics" | "publish" | "service"
+  "launch" | "rosbag" | "topics" | "publish" | "service" | "settings"
 >("launch");
 
 export const autowareFolderPathAtom = atomWithStorage<string | null>(
   "autowareFolderPathLaunchGUI",
   null
+);
+
+export const multipleWorkspacePathsAtom = atomWithStorage<Array<string>>(
+  "multipleWorkspacePathsLaunchGUI",
+  []
 );
 
 export const cpuUsageAtom = atom<number>(0);

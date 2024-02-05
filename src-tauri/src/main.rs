@@ -6,12 +6,10 @@
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 use tauri::Manager;
-use tauri_plugin_fs::FsExt;
 use tokio::process::Command as TokioCommand;
 use tokio::time::sleep;
 
-mod components; // Assuming autoware_manager.rs is in the same directory as main.rs
-
+mod components; // Import all the components
 use components::autoware_manager::{
     autoware_installed_packages, get_services, get_topics, kill_autoware_process, launch_autoware,
 };
@@ -250,12 +248,6 @@ async fn main() {
         ])
         .setup(move |app| {
             let app_for_async = app.app_handle().clone();
-            // app.fs_scope().allow_directory("$HOME/**/*", true).unwrap();
-            // print out the fs scope
-            println!(
-                "{:?}",
-                app.fs_scope().allowed_patterns().iter().collect::<Vec<_>>()
-            );
             let flag_for_async = flag.clone();
             tokio::spawn(async move {
                 show_main_window(app_for_async, flag_for_async).await;
@@ -289,27 +281,6 @@ async fn main() {
                         .unwrap();
                     api.prevent_close();
                 }
-                tauri::WindowEvent::Resized(_) => {
-                    // do nothing
-                }
-                tauri::WindowEvent::Moved(_) => {
-                    // do nothing
-                }
-                tauri::WindowEvent::Destroyed => {
-                    // do nothing
-                }
-                tauri::WindowEvent::Focused(_) => {
-                    // do nothing
-                }
-                tauri::WindowEvent::ScaleFactorChanged { .. } => {
-                    // do nothing
-                }
-                tauri::WindowEvent::FileDrop(_) => {
-                    // do nothing
-                }
-                tauri::WindowEvent::ThemeChanged(_) => {
-                    // do nothing
-                }
                 _ => {
                     // do nothing
                 }
@@ -323,6 +294,10 @@ async fn main() {
         .plugin(tauri_plugin_window::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_fs::init())
+        .plugin(tauri_plugin_autostart::init(
+            tauri_plugin_autostart::MacosLauncher::LaunchAgent,
+            None,
+        ))
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

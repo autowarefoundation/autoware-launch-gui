@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { invoke } from "@tauri-apps/api/tauri";
+import { invoke } from "@tauri-apps/api";
 import { open } from "@tauri-apps/plugin-dialog";
 import { useAtom } from "jotai";
 
@@ -14,6 +14,7 @@ import {
 import {
   autowareFolderPathAtom,
   calibrationToolLaunchPathsAtom,
+  multipleWorkspacePathsAtom,
   parsedCalibrationLaunchFilesAtom,
   selectedCalibrationLaunchArgsAtom,
   userEditedCalibrationToolArgsAtom,
@@ -49,6 +50,11 @@ const showToast = (description: string): void => {
   });
 };
 
+type ToolArgs = {
+  arg: string;
+  value: string;
+};
+
 const CalibrationTools = () => {
   const triggerRef = useRef<HTMLButtonElement>(null);
   const dialogTriggerRef = useRef<HTMLButtonElement>(null);
@@ -57,6 +63,9 @@ const CalibrationTools = () => {
     userEditedCalibrationToolArgsAtom
   );
   const [autowarePath, setAutowarePath] = useAtom(autowareFolderPathAtom);
+  const [extraWorkspacePaths, setExtraWorkspacePaths] = useAtom(
+    multipleWorkspacePathsAtom
+  );
   const [parsedFilePath, setParsedFilePath] = useState<string>("");
 
   const [elements, setElements] = useAtom(parsedCalibrationLaunchFilesAtom);
@@ -81,11 +90,6 @@ const CalibrationTools = () => {
     selectedCalibrationLaunchArgsAtom
   );
   const logDivRef = useRef<HTMLDivElement>(null);
-
-  type ToolArgs = {
-    arg: string;
-    value: string;
-  };
 
   const commandGeneratorForToolLaunching = (
     tool: string,
@@ -343,6 +347,7 @@ const CalibrationTools = () => {
           tool,
           command: commandToBeLaunched,
           autowarePath,
+          extraWorkspaces: extraWorkspacePaths,
         },
       });
 

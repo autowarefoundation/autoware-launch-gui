@@ -33,6 +33,7 @@ pub async fn play_rosbag(
     window: tauri::Window<Wry>,
     path: String,
     autoware_path: String,
+    extra_workspaces: Vec<String>,
     flags: Vec<Flag>,
 ) {
     let window_clone = window.clone();
@@ -55,12 +56,19 @@ pub async fn play_rosbag(
         }
     }
 
+    let mut source_extra_workspaces_str = String::new();
+    for workspace in extra_workspaces {
+        source_extra_workspaces_str
+            .push_str(&format!("source {}/install/setup.bash && ", workspace));
+    }
+
     // Construct the full command string
     let cmd_str = format!(
         "source /opt/ros/humble/setup.bash && \
          source {}/install/setup.bash && \
+         {} \
          ros2 bag play {} {}",
-        autoware_path, path, cmd_flags
+        autoware_path, source_extra_workspaces_str, path, cmd_flags
     );
 
     println!("Rosbag command: {}", cmd_str.clone());
@@ -209,13 +217,20 @@ fn to_snake_case(s: &str) -> String {
 pub async fn get_rosbag_info(
     path: String,
     autoware_path: String,
+    extra_workspaces: Vec<String>,
 ) -> Result<serde_json::Value, String> {
     // Construct the command string to set the playback rate
+    let mut source_extra_workspaces_str = String::new();
+    for workspace in extra_workspaces {
+        source_extra_workspaces_str
+            .push_str(&format!("source {}/install/setup.bash && ", workspace));
+    }
     let cmd_str = format!(
         "source /opt/ros/humble/setup.bash && \
          source {}/install/setup.bash && \
+         {} \
          ros2 bag info {}",
-        autoware_path, path
+        autoware_path, source_extra_workspaces_str, path
     );
 
     // println!("Getting rosbag info: {}", cmd_str);

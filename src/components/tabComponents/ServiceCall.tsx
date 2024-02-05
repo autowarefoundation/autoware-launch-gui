@@ -2,12 +2,13 @@
 
 import { useEffect, useRef, useState } from "react";
 import { CheckedState } from "@radix-ui/react-checkbox";
-import { invoke } from "@tauri-apps/api/tauri";
+import { invoke } from "@tauri-apps/api";
 import { useAtom } from "jotai";
 
 import { cn } from "@/lib/utils";
 import {
   autowareFolderPathAtom,
+  multipleWorkspacePathsAtom,
   serviceListAtom,
   TopicsAndTypes,
   userEditedServiceCallFlagsAtom,
@@ -35,6 +36,9 @@ const EMPTY_SERVICE: TopicsAndTypes = {
 const ServiceCall = () => {
   const [services, setServices] = useAtom(serviceListAtom);
   const [autowarePath, setAutowarePath] = useAtom(autowareFolderPathAtom);
+  const [extraWorkspacePaths, setExtraWorkspacePaths] = useAtom(
+    multipleWorkspacePathsAtom
+  );
   const [rate, setRate] = useAtom(userEditedServiceCallFlagsAtom);
 
   const [selectedService, setSelectedService] =
@@ -69,6 +73,7 @@ const ServiceCall = () => {
         payload: {
           messageType: topic.type,
           autowarePath,
+          extraWorkspaces: extraWorkspacePaths,
         },
       })) as string;
 
@@ -96,6 +101,7 @@ const ServiceCall = () => {
           value: rate.isActivated ? rate.value : "",
         },
         autowarePath,
+        extraWorkspaces: extraWorkspacePaths,
       },
     });
     setServiceOutput(() => ["Called service: ", selectedService.topicName]);
