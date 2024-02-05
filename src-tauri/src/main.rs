@@ -13,12 +13,13 @@ use tokio::time::sleep;
 mod components; // Assuming autoware_manager.rs is in the same directory as main.rs
 
 use components::autoware_manager::{
-    autoware_installed_packages, get_topics, kill_autoware_process, launch_autoware,
+    autoware_installed_packages, get_services, get_topics, kill_autoware_process, launch_autoware,
 };
 use components::json_profile::{load_profile, save_profile};
 use components::ros2_cmd_manager::{
-    kill_bag_record, kill_calibration_tool, kill_topic_echo, launch_tool, start_bag_record,
-    start_topic_echo,
+    call_service, find_all_ros_message_types, get_message_interface, kill_bag_record,
+    kill_calibration_tool, kill_service_call, kill_topic_echo, kill_topic_pub, launch_tool,
+    publish_message, start_bag_record, start_topic_echo,
 };
 use components::rosbag_manager::{
     get_rosbag_info, play_rosbag, set_rosbag_playback_rate, stop_rosbag_play, toggle_pause_state,
@@ -229,6 +230,7 @@ async fn main() {
             set_rosbag_playback_rate,
             get_rosbag_info,
             get_topics,
+            get_services,
             start_topic_echo,
             kill_topic_echo,
             start_bag_record,
@@ -238,7 +240,13 @@ async fn main() {
             kill_ssh_connection,
             connect_ssh,
             launch_tool,
-            kill_calibration_tool
+            kill_calibration_tool,
+            get_message_interface,
+            publish_message,
+            call_service,
+            kill_service_call,
+            kill_topic_pub,
+            find_all_ros_message_types
         ])
         .setup(move |app| {
             let app_for_async = app.app_handle().clone();

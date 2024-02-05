@@ -25,7 +25,9 @@ export type GroupedTopics = {
   [key: string]: TopicsAndTypes[];
 };
 
-export const tabAtom = atom<"launch" | "rosbag" | "topics">("launch");
+export const tabAtom = atom<
+  "launch" | "rosbag" | "topics" | "publish" | "service"
+>("launch");
 
 export const autowareFolderPathAtom = atomWithStorage<string | null>(
   "autowareFolderPathLaunchGUI",
@@ -127,6 +129,7 @@ export const isBagPlayingAtom = atomWithStorage<boolean>(
 export const isBagRecordingAtom = atom<boolean>(false);
 
 export const topicListAtom = atom<GroupedTopics>({});
+export const serviceListAtom = atom<GroupedTopics>({});
 export const selectedTopicsAtom = atom<TopicsAndTypes[]>([]);
 
 export const userEditedBagPlayFlagsAtom = atomWithStorage<
@@ -142,6 +145,13 @@ export const userEditedBagRecordFlagsAtom = atomWithStorage<
     value: string | boolean | number;
   }[]
 >("userEditedBagRecordFlagsLaunchGUI", []);
+
+export const userEditedTopicPubFlagsAtom = atomWithStorage<
+  {
+    arg: string;
+    value: string | boolean | number;
+  }[]
+>("userEditedTopicPubFlagsLaunchGUI", []);
 
 export const sshHostAtom = atom<string>("");
 export const sshUsernameAtom = atom<string>("");
@@ -377,3 +387,118 @@ export const rosbagRecordFlags: {
     defaultValue: false,
   },
 };
+
+export const rosTopicPubFlags: {
+  [key: string]: {
+    description: string;
+    example: string;
+    defaultValue: string | boolean | number;
+    value?: string | boolean | number;
+  };
+} = {
+  "--rate": {
+    description:
+      "The publishing rate (in Hz) for continuously publishing messages.",
+    example: "10",
+    defaultValue: "",
+  },
+  "--once": {
+    description: "Publish only one message, then exit.",
+    example: "",
+    defaultValue: false,
+  },
+  "--times": {
+    description: "Number of times to publish the message.",
+    example: "5",
+    defaultValue: "",
+  },
+  "--print": {
+    description: "Print the message to the console before publishing.",
+    example: "",
+    defaultValue: false,
+  },
+  "--keep-alive": {
+    description:
+      "Keep the publisher alive by spinning in the background after the last message is sent.",
+    example: "",
+    defaultValue: false,
+  },
+  "--qos-profile": {
+    description: "Use a pre-configured Quality of Service profile by name.",
+    example: "sensor-data",
+    defaultValue: "",
+  },
+  "--qos-depth": {
+    description:
+      "Queue size setting to publish with (overrides depth value of --qos-profile option)",
+    example: "10",
+    defaultValue: "",
+  },
+  "--qos-durability": {
+    description:
+      "Quality of service durability setting to publish with (overrides durability value of --qos-profile option, default: transient_local)",
+    example: "transient_local",
+    defaultValue: "",
+  },
+  "--qos-reliability": {
+    description:
+      "Quality of service reliability setting to publish with (overrides reliability value of --qos-profile option, default: reliable)",
+    example: "reliable",
+    defaultValue: "",
+  },
+  "--qos-history": {
+    description:
+      "History of samples setting to publish with (overrides history value of --qos-profile option, default: keep_last)",
+    example: "keep_last",
+    defaultValue: "",
+  },
+  "--node-name": {
+    description: "Name of the node to publish with.",
+    example: "my_node",
+    defaultValue: "",
+  },
+  "--wait-matching-subscriptions": {
+    description:
+      'Wait until finding the specified number of matching subscriptions. Defaults to 1 when using "-1"/"--once"/"--times", otherwise defaults to 0.',
+    example: "1",
+    defaultValue: "",
+  },
+  "--use-sim-time": {
+    description:
+      "Use simulation time for message timestamps by subscribing to the /clock topic.",
+    example: "",
+    defaultValue: false,
+  },
+  "--spin-time": {
+    description:
+      "Spin time in seconds to wait for discovery (only applies when not using an already running daemon).",
+    example: "1.0",
+    defaultValue: "",
+  },
+};
+
+export const rosServiceCallFlags: {
+  [key: string]: {
+    description: string;
+    example: string;
+    defaultValue: string | boolean | number;
+    value?: string | boolean | number;
+  };
+} = {
+  "--rate": {
+    description:
+      "The publishing rate (in Hz) for continuously publishing messages.",
+    example: "10",
+    defaultValue: "",
+  },
+};
+
+export const userEditedServiceCallFlagsAtom = atomWithStorage<{
+  arg: string;
+  value: string;
+  isActivated: boolean;
+}>("userEditedServiceCallFlagsLaunchGUI", {
+  arg: "--rate",
+  value: "",
+  isActivated: false,
+});

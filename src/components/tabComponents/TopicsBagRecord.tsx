@@ -28,7 +28,7 @@ import {
 } from "../ui/tooltip";
 import { useToast } from "../ui/use-toast";
 
-const groupByPrefix = (topics: TopicsAndTypes[]) => {
+export const groupByPrefix = (topics: TopicsAndTypes[]) => {
   const grouped: GroupedTopics = {};
 
   topics.forEach((topic) => {
@@ -134,6 +134,7 @@ const TopicsBagRecord = () => {
         }
       );
 
+      await getTopics();
       return () => {
         unlistenTopicEcho();
         unlistenBagRecord();

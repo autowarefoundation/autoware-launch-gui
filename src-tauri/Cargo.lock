@@ -222,7 +222,7 @@ checksum = "d468802bab17cbc0cc575e9b053f41e72aa36bfa6b7f55e3529ffa43161b97fa"
 
 [[package]]
 name = "autoware-launch-gui"
-version = "1.0.3"
+version = "1.0.4"
 dependencies = [
  "dirs",
  "nix 0.23.2",
