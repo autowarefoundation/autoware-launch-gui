@@ -1,6 +1,7 @@
 use serde_json::json;
 use std::io::BufReader;
 use std::{fs::File, path::Path};
+use tauri::Manager;
 use tauri::Wry;
 use xml::reader::{EventReader, XmlEvent};
 

@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { invoke } from "@tauri-apps/api/core";
+import { Window } from "@tauri-apps/api/window";
 import { useAtom } from "jotai";
 import {
   ChevronDown,
@@ -44,11 +46,14 @@ export function Menu() {
   const [isMaximized, setIsMaximized] = useState(false);
   useEffect(() => {
     async function init() {
-      const { appWindow } = await import("@tauri-apps/plugin-window");
+      console.log(Window.getCurrent().isMaximized());
+
       const interval = setInterval(() => {
-        appWindow.isMaximized().then((maximized) => {
-          setIsMaximized(maximized);
-        });
+        Window.getCurrent()
+          .isMaximized()
+          .then((maximized) => {
+            setIsMaximized(maximized);
+          });
       }, 1000);
 
       return () => {
@@ -186,11 +191,10 @@ export function Menu() {
             <MenubarItem
               className="flex items-center gap-2"
               onClick={async () => {
-                const { appWindow } = await import("@tauri-apps/plugin-window");
-                if (await appWindow.isMaximized()) {
-                  appWindow.unmaximize();
+                if (await Window.getCurrent().isMaximized()) {
+                  Window.getCurrent().unmaximize();
                 } else {
-                  appWindow.maximize();
+                  Window.getCurrent().maximize();
                 }
               }}
             >
@@ -220,7 +224,11 @@ export function Menu() {
             <MenubarSeparator />
             <MenubarItem
               className="flex items-center gap-2"
-              onClick={() => window.close()}
+              onClick={async () => {
+                await invoke("kill_autoware_process", {});
+
+                Window.getCurrent().close();
+              }}
             >
               <X className="h-4 w-4" />
               <span className="font-mono text-xs">Quit</span>

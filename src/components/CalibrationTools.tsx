@@ -1,7 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { invoke } from "@tauri-apps/api";
+import { invoke } from "@tauri-apps/api/core";
+import { listen } from "@tauri-apps/api/event";
 import { open } from "@tauri-apps/plugin-dialog";
 import { useAtom } from "jotai";
 
@@ -181,9 +182,7 @@ const CalibrationTools = () => {
 
   useEffect(() => {
     async function getLaunchFiles() {
-      const { appWindow } = await import("@tauri-apps/plugin-window");
-
-      const unlistenCalibrationLaunchFileParsed = await appWindow.listen(
+      const unlistenCalibrationLaunchFileParsed = await listen(
         "receiveTreeCalibration",
         (msg) => {
           setElements(
@@ -192,7 +191,7 @@ const CalibrationTools = () => {
         }
       );
 
-      const unlistenCalibrationToolLaunchOutput = await appWindow.listen(
+      const unlistenCalibrationToolLaunchOutput = await listen(
         "calibration-tool-output",
         (msg) => {
           const { tool, output } = msg.payload as {
@@ -228,10 +227,8 @@ const CalibrationTools = () => {
         setSelectedTool(tool);
 
         await invoke("parse_and_send_xml", {
-          payload: {
-            path: calibrationToolPaths[tool],
-            calibrationTool: true,
-          },
+          path: calibrationToolPaths[tool],
+          calibrationTool: true,
         });
 
         dialogTriggerRef.current?.click();
@@ -261,10 +258,8 @@ const CalibrationTools = () => {
         return;
       }
       await invoke("parse_and_send_xml", {
-        payload: {
-          path: file.path,
-          calibrationTool: true,
-        },
+        path: file.path,
+        calibrationTool: true,
       });
 
       setParsedFilePath(file.path);
@@ -343,12 +338,10 @@ const CalibrationTools = () => {
         });
 
       const res = await invoke("launch_tool", {
-        payload: {
-          tool,
-          command: commandToBeLaunched,
-          autowarePath,
-          extraWorkspaces: extraWorkspacePaths,
-        },
+        tool,
+        command: commandToBeLaunched,
+        autowarePath,
+        extraWorkspaces: extraWorkspacePaths,
       });
 
       setIsToolRunning((prev) => {
@@ -365,9 +358,7 @@ const CalibrationTools = () => {
   const handleKillTool = useCallback(async (tool: string) => {
     setLog((prev) => [...prev, "Killing the tool"]);
     const res = await invoke("kill_calibration_tool", {
-      payload: {
-        tool,
-      },
+      tool,
     });
 
     setIsToolRunning((prev) =>

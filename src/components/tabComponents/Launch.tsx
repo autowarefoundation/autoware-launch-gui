@@ -1,7 +1,9 @@
 "use client";
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { invoke } from "@tauri-apps/api";
+import { invoke } from "@tauri-apps/api/core";
+import { listen } from "@tauri-apps/api/event";
+import { Window } from "@tauri-apps/api/window";
 import { open } from "@tauri-apps/plugin-dialog";
 import { useAtom } from "jotai";
 
@@ -48,32 +50,25 @@ const Launch = () => {
 
   useEffect(() => {
     async function init() {
-      const { appWindow } = await import("@tauri-apps/plugin-window");
-
       // TODO: Figure out the tauri-controls situation
-      const unlistenCloseRequest = await appWindow.listen(
+      const unlistenCloseRequest = await listen(
         "close_requested",
         async (msg) => {
-          await invoke("kill_autoware_process", {
-            payload: {},
-          });
+          await invoke("kill_autoware_process", {});
 
-          appWindow.close();
+          Window.getCurrent().close();
         }
       );
 
-      const unlistenPidsLen = await appWindow.listen("pids_len", (msg) => {
+      const unlistenPidsLen = await listen("pids_len", (msg) => {
         setPidsLen(msg.payload as number);
       });
 
-      const unlistenPidsCleared = await appWindow.listen(
-        "pids-cleared",
-        (msg) => {
-          setPidsLen(0);
-        }
-      );
+      const unlistenPidsCleared = await listen("pids-cleared", (msg) => {
+        setPidsLen(0);
+      });
 
-      const unlistenAutowareLaunchFileParsed = await appWindow.listen(
+      const unlistenAutowareLaunchFileParsed = await listen(
         "receiveTree",
         (msg) => {
           setElements(
@@ -82,17 +77,14 @@ const Launch = () => {
         }
       );
 
-      const unlistenPackageNotFound = await appWindow.listen(
-        "package-not-found",
-        () => {
-          toast({
-            title: "Caught an Exception",
-            description:
-              "Exception hit, please check the error logs or try running the app from the terminal `autoware-launch-gui`",
-            variant: "destructive",
-          });
-        }
-      );
+      const unlistenPackageNotFound = await listen("package-not-found", () => {
+        toast({
+          title: "Caught an Exception",
+          description:
+            "Exception hit, please check the error logs or try running the app from the terminal `autoware-launch-gui`",
+          variant: "destructive",
+        });
+      });
 
       return () => {
         unlistenCloseRequest();
@@ -347,9 +339,7 @@ const Launch = () => {
     if (mapPathArg) {
       const mapPath = mapPathArg.value;
       const mapPathContent = (await invoke("files_in_dir", {
-        payload: {
-          mapPath: mapPath,
-        },
+        mapPath: mapPath,
       })) as string[];
 
       // we need to only keep the filename with the extension
@@ -407,12 +397,10 @@ const Launch = () => {
 
         if (!isSSHConnected) {
           await invoke("launch_autoware", {
-            payload: {
-              path: autowarePath,
-              launchFile: launchFilePath,
-              extraWorkspaces: extraWorkspacePaths,
-              argsToLaunch,
-            },
+            path: autowarePath,
+            launchFile: launchFilePath,
+            extraWorkspaces: extraWorkspacePaths,
+            argsToLaunch,
           });
         } else {
           // Construct the command arguments string dynamically
@@ -427,7 +415,9 @@ const Launch = () => {
 
           setAutowareLaunchedInSSH(true);
           const result = (await invoke("execute_command_in_shell", {
-            payload: { command: cmdStr, user, host },
+            command: cmdStr,
+            user,
+            host,
           })) as string;
         }
         return;
@@ -466,10 +456,8 @@ const Launch = () => {
       return;
     }
     await invoke("parse_and_send_xml", {
-      payload: {
-        path: file.path,
-        calibrationTool: false,
-      },
+      path: file.path,
+      calibrationTool: false,
     });
 
     // const fileNameWithExtension = file.path.split("/").pop();
@@ -514,13 +502,9 @@ const Launch = () => {
         <Button
           onClick={async () => {
             if (!isSSHConnected) {
-              await invoke("kill_autoware_process", {
-                payload: {},
-              });
+              await invoke("kill_autoware_process", {});
             } else {
-              const response = await invoke("kill_ssh_connection", {
-                payload: {},
-              });
+              const response = await invoke("kill_ssh_connection", {});
               _setIsConnected(false);
               setAutowareLaunchedInSSH(false);
 

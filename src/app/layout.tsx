@@ -3,6 +3,8 @@
 import "@/styles/globals.css";
 
 import { useEffect } from "react";
+import { invoke } from "@tauri-apps/api/core";
+import { Window } from "@tauri-apps/api/window";
 import { Provider } from "jotai";
 
 import { cn } from "@/lib/utils";
@@ -20,13 +22,15 @@ interface ExamplesLayoutProps {
 
 export default function MyApp({ children }: ExamplesLayoutProps) {
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
+    const handleKeyDown = async (e: KeyboardEvent) => {
       if (e.ctrlKey && e.key === "r") {
         e.preventDefault();
         window.location.reload();
       } else if (e.ctrlKey && e.key === "q") {
         e.preventDefault();
-        window.close();
+        await invoke("kill_autoware_process", {});
+
+        Window.getCurrent().close();
       }
     };
     window.addEventListener("keydown", handleKeyDown);

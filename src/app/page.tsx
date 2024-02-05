@@ -2,7 +2,7 @@
 
 import React from "react";
 import dynamic from "next/dynamic";
-import { invoke } from "@tauri-apps/api";
+import { invoke } from "@tauri-apps/api/core";
 import { useAtom } from "jotai";
 
 import {
@@ -76,9 +76,7 @@ export default function App() {
 
   const updateUsage = async () => {
     const systemInfo = (await invoke("get_system_info", {
-      payload: {
-        autowarePath: autowareFolderPath,
-      },
+      autowarePath: autowareFolderPath,
     })) as {
       cpu_usage: number;
       memory_used_percentage: number;

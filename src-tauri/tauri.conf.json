@@ -1,7 +1,7 @@
 {
   "build": {
-    "beforeDevCommand": "pnpm dev",
     "beforeBuildCommand": "pnpm build",
+    "beforeDevCommand": "pnpm dev",
     "devPath": "http://localhost:1420",
     "distDir": "../dist",
     "withGlobalTauri": false
@@ -13,6 +13,9 @@
   "tauri": {
     "bundle": {
       "active": true,
+      "appimage": {
+        "bundleMediaFramework": false
+      },
       "category": "DeveloperTool",
       "copyright": "",
       "deb": {
@@ -29,23 +32,19 @@
         "providerShortName": null,
         "signingIdentity": null
       },
-      "appimage": {
-        "bundleMediaFramework": false
-      },
       "resources": [],
       "shortDescription": "",
       "targets": "all",
       "windows": {
         "certificateThumbprint": null,
         "digestAlgorithm": "sha256",
-        "timestampUrl": "",
         "nsis": {
           "installerIcon": "./icons/icon.ico"
-        }
+        },
+        "timestampUrl": ""
       }
     },
     "security": {
-      "csp": null,
       "assetProtocol": {
         "enable": false,
         "scope": {
@@ -53,50 +52,46 @@
           "deny": []
         }
       },
+      "csp": null,
       "dangerousRemoteDomainIpcAccess": [
         {
-          "scheme": "https",
           "domain": "tauri.localhost",
-          "windows": ["main"],
-          "plugins": [
-            "app",
-            "shell",
-            "os",
-            "event",
-            "window",
-            "dialog",
-            "fs",
-            "path"
-          ]
+          "plugins": ["app", "shell", "os", "event", "window", "dialog", "fs"],
+          "scheme": "https",
+          "windows": ["main"]
         }
       ]
     },
+    "trayIcon": {
+      "iconPath": "icons/64x64-AWF.png",
+      "id": "awf-tray"
+    },
     "windows": [
       {
-        "fullscreen": false,
-        "title": "Splash Screen",
+        "alwaysOnTop": true,
         "center": true,
-        "resizable": false,
         "decorations": false,
-        "transparent": true,
-        "width": 800,
+        "fullscreen": false,
         "height": 590,
         "label": "splash",
+        "resizable": false,
+        "title": "Splash Screen",
+        "transparent": true,
         "url": "splash.html",
-        "alwaysOnTop": true
+        "width": 800
       },
       {
-        "fullscreen": false,
-        "title": "Autoware Launch GUI",
         "center": true,
-        "resizable": true,
         "decorations": false,
-        "transparent": true,
+        "fullscreen": false,
         "height": 840,
-        "width": 1200,
         "label": "main",
         "minHeight": 600,
-        "minWidth": 840
+        "minWidth": 840,
+        "resizable": true,
+        "title": "Autoware Launch GUI",
+        "transparent": true,
+        "width": 1200
       }
     ]
   }

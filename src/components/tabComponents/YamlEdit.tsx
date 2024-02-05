@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { invoke } from "@tauri-apps/api";
+import { invoke } from "@tauri-apps/api/core";
 import { useAtom } from "jotai";
 
 import { autowareFolderPathAtom } from "@/app/jotai/atoms";
@@ -70,9 +70,7 @@ const YAMLEdit = () => {
   const configFolderPath = `${autowareFolderPath}/src/launcher/autoware_launch/autoware_launch/config`;
   const findConfigFiles = async () => {
     const res: string[] = await invoke("find_yaml_files", {
-      payload: {
-        path: configFolderPath,
-      },
+      path: configFolderPath,
     });
 
     setParsedConfigFolderStructure(generateFolderStructure(res));
@@ -85,9 +83,7 @@ const YAMLEdit = () => {
     // setParsedConfigPath("");
 
     const text: any = await invoke("parse_yaml", {
-      payload: {
-        path: absolutePath,
-      },
+      path: absolutePath,
     });
     setParsedConfig(text);
     setParsedConfigPath(absolutePath);

@@ -5,6 +5,7 @@
 
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
+use tauri::menu::{MenuBuilder, MenuItemBuilder};
 use tauri::Manager;
 use tokio::process::Command as TokioCommand;
 use tokio::time::sleep;
@@ -286,12 +287,45 @@ async fn main() {
                 }
             });
 
+            let show_hide = MenuItemBuilder::with_id("toggle", "Show/Hide").build(app);
+            let quit = MenuItemBuilder::with_id("quit", "Quit").build(app);
+
+            let menu = MenuBuilder::new(app).items(&[&show_hide, &quit]).build()?;
+
+            // get access to the tray from app state
+            let tray = app.tray();
+            match tray {
+                Some(tray) => {
+                    let _ = tray.set_menu(Some(menu));
+                    let _ = tray.set_icon(Some(app.default_window_icon().unwrap().clone()));
+
+                    tray.on_menu_event(move |app, event| match event.id().0.as_str() {
+                        "toggle" => {
+                            let main_window = app.get_window("main").unwrap();
+                            if main_window.is_visible().unwrap() {
+                                main_window.hide().unwrap();
+                            } else {
+                                main_window.show().unwrap();
+                            }
+                        }
+                        "quit" => {
+                            let main_window = app.get_window("main").unwrap();
+                            main_window.close().unwrap();
+                        }
+                        _ => {
+                            println!("Unknown menu item: {}", event.id().0);
+                        }
+                    });
+                }
+                None => {
+                    println!("No tray found");
+                }
+            }
+
             Ok(())
         })
-        .plugin(tauri_plugin_app::init())
         .plugin(tauri_plugin_os::init())
         .plugin(tauri_plugin_shell::init())
-        .plugin(tauri_plugin_window::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_autostart::init(

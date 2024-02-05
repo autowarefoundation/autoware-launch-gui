@@ -5,6 +5,7 @@ use serde_json::json;
 use std::collections::HashMap;
 use std::process::Stdio;
 use std::sync::{Arc, Mutex};
+use tauri::Manager;
 use tauri::Wry;
 use tokio::io::{AsyncBufReadExt, BufReader};
 use tokio::process::Command;
