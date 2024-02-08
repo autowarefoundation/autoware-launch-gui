@@ -46,8 +46,6 @@ export function Menu() {
   const [isMaximized, setIsMaximized] = useState(false);
   useEffect(() => {
     async function init() {
-      console.log(Window.getCurrent().isMaximized());
-
       const interval = setInterval(() => {
         Window.getCurrent()
           .isMaximized()
@@ -227,7 +225,7 @@ export function Menu() {
               onClick={async () => {
                 await invoke("kill_autoware_process", {});
 
-                Window.getCurrent().close();
+                await Window.getCurrent().destroy();
               }}
             >
               <X className="h-4 w-4" />

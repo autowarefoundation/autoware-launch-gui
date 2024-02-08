@@ -22,7 +22,7 @@ interface ExamplesLayoutProps {
 
 export default function MyApp({ children }: ExamplesLayoutProps) {
   useEffect(() => {
-    const handleKeyDown = async (e: KeyboardEvent) => {
+    const handleKeyPress = async (e: KeyboardEvent) => {
       if (e.ctrlKey && e.key === "r") {
         e.preventDefault();
         window.location.reload();
@@ -30,12 +30,12 @@ export default function MyApp({ children }: ExamplesLayoutProps) {
         e.preventDefault();
         await invoke("kill_autoware_process", {});
 
-        Window.getCurrent().close();
+        await Window.getCurrent().destroy();
       }
     };
-    window.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("keypress", handleKeyPress);
     return () => {
-      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("keypress", handleKeyPress);
     };
   }, []);
   return (
