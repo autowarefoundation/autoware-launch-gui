@@ -1,49 +1,9 @@
 {
-  "build": {
-    "beforeBuildCommand": "pnpm build",
-    "beforeDevCommand": "pnpm dev",
-    "devPath": "http://localhost:1420",
-    "distDir": "../dist",
-    "withGlobalTauri": false
-  },
-  "package": {
-    "productName": "Autoware Launch GUI",
-    "version": "1.0.4"
-  },
-  "tauri": {
-    "bundle": {
-      "active": true,
-      "appimage": {
-        "bundleMediaFramework": false
-      },
-      "category": "DeveloperTool",
-      "copyright": "",
-      "deb": {
-        "depends": []
-      },
-      "externalBin": [],
-      "icon": ["icons/64x64-AWF.png", "icons/256x256-AWF.png"],
-      "identifier": "com.leodrive.ai",
-      "longDescription": "",
-      "macOS": {
-        "entitlements": null,
-        "exceptionDomain": "",
-        "frameworks": [],
-        "providerShortName": null,
-        "signingIdentity": null
-      },
-      "resources": [],
-      "shortDescription": "",
-      "targets": "all",
-      "windows": {
-        "certificateThumbprint": null,
-        "digestAlgorithm": "sha256",
-        "nsis": {
-          "installerIcon": "./icons/icon.ico"
-        },
-        "timestampUrl": ""
-      }
-    },
+  "$schema": "./capabilities/schemas/desktop-schema.json",
+  "identifier": "com.leodrive.ai",
+  "productName": "Autoware Launch GUI",
+  "version": "1.0.5",
+  "app": {
     "security": {
       "assetProtocol": {
         "enable": false,
@@ -52,15 +12,7 @@
           "deny": []
         }
       },
-      "csp": null,
-      "dangerousRemoteDomainIpcAccess": [
-        {
-          "domain": "tauri.localhost",
-          "plugins": ["app", "shell", "os", "event", "window", "dialog", "fs"],
-          "scheme": "https",
-          "windows": ["main"]
-        }
-      ]
+      "csp": null
     },
     "trayIcon": {
       "iconPath": "icons/64x64-AWF.png",
@@ -93,6 +45,59 @@
         "transparent": true,
         "width": 1200
       }
-    ]
+    ],
+    "withGlobalTauri": true
+  },
+  "build": {
+    "beforeBuildCommand": "pnpm build",
+    "beforeDevCommand": "pnpm dev",
+    "devUrl": "http://localhost:1420",
+    "frontendDist": "../dist"
+  },
+  "bundle": {
+    "active": true,
+    "category": "DeveloperTool",
+    "copyright": "",
+    "externalBin": [],
+    "icon": ["icons/64x64-AWF.png", "icons/256x256-AWF.png"],
+    "linux": {
+      "appimage": {
+        "bundleMediaFramework": false
+      },
+      "deb": {
+        "depends": []
+      }
+    },
+    "longDescription": "",
+    "macOS": {
+      "entitlements": null,
+      "exceptionDomain": "",
+      "frameworks": [],
+      "providerShortName": null,
+      "signingIdentity": null
+    },
+    "resources": [],
+    "shortDescription": "",
+    "targets": "all",
+    "windows": {
+      "certificateThumbprint": null,
+      "digestAlgorithm": "sha256",
+      "nsis": {
+        "installerIcon": "./icons/icon.ico"
+      },
+      "timestampUrl": ""
+    }
+  },
+  "plugins": {
+    "os": { "os-type": true, "arch": true },
+    "shell": {
+      "open": true
+    },
+    "fs": {
+      "all": true
+    },
+    "window": {
+      "all": true
+    }
   }
 }

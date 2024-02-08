@@ -1,0 +1,67 @@
+{
+  "$schema": "./schemas/desktop-schema.json",
+  "identifier": "run-app-desktop",
+  "description": "Permissions to run the app (desktop only)",
+  "windows": ["main"],
+  "platforms": ["linux", "macOS", "windows"],
+  "permissions": [
+    "fs:default",
+    "event:allow-listen",
+    "tray:default",
+    "fs:allow-rename",
+    "fs:allow-read",
+    "fs:allow-write",
+    "fs:allow-read-file",
+    "fs:allow-write-file",
+    "fs:allow-read-dir",
+    "fs:allow-read-text-file",
+    "fs:allow-write-text-file",
+    "fs:allow-copy-file",
+    "fs:allow-create",
+    "fs:allow-exists",
+    "fs:read-all",
+    "fs:read-dirs",
+    "fs:read-files",
+    "fs:write-all",
+    "fs:write-files",
+    "fs:allow-mkdir",
+    "fs:allow-remove",
+    "fs:allow-write-text-file",
+    "fs:scope-download-recursive",
+    "fs:scope-resource-recursive",
+    {
+      "identifier": "fs:scope-appdata-recursive",
+      "allow": [
+        {
+          "path": "$APPDATA/db/**"
+        }
+      ],
+      "deny": [
+        {
+          "path": "$APPDATA/db/*.stronghold"
+        }
+      ]
+    },
+    "app:allow-name",
+    "app:allow-name",
+    "app:allow-tauri-version",
+    "app:allow-version",
+    "window:allow-internal-on-mousemove",
+    "dialog:allow-open",
+    "dialog:allow-save",
+    "webview:allow-internal-toggle-devtools",
+    "os:allow-arch",
+    "os:allow-os-type",
+    "shell:allow-open",
+    "event:allow-emit",
+    "window:allow-maximize",
+    "window:allow-unmaximize",
+    "window:allow-close",
+    "window:allow-destroy",
+    "window:allow-start-dragging",
+    "webview:allow-webview-close",
+    "autostart:allow-is-enabled",
+    "autostart:allow-enable",
+    "autostart:allow-disable"
+  ]
+}

@@ -71,78 +71,84 @@ export function AutowareLaunchDialog(props: AutowareLaunchDialog) {
         setPackageList(folders);
       }
 
-      const unlistenLaunchLogs = await listen("autoware-output", (data) => {
-        const logs = data.payload as string;
+      const unlistenLaunchLogs = await listen(
+        "autoware-output",
+        (data) => {
+          const logs = data.payload as string;
 
-        // Helper function to handle log updates using Sets
-        const handleLogUpdate = (setLogState: any) => {
-          setLogState((prevArray: string[]) => {
-            // Deep clone the previous array
-            const clonedPrevArray = JSON.parse(JSON.stringify(prevArray));
+          // Helper function to handle log updates using Sets
+          const handleLogUpdate = (setLogState: any) => {
+            setLogState((prevArray: string[]) => {
+              // Deep clone the previous array
+              const clonedPrevArray = JSON.parse(JSON.stringify(prevArray));
 
-            const newSet = new Set(clonedPrevArray);
-            newSet.add(logs);
-            if (newSet.size > 100) {
-              return [...newSet].slice(-50);
-            }
-            return [...newSet];
-          });
-        };
-
-        // Check for "ERROR" logs
-        if (logs.includes("ERROR")) {
-          console.log("WE HAVE AN ERROR");
-          handleLogUpdate(setLaunchLogsAll);
-          handleLogUpdate(setLaunchLogsError);
-        }
-
-        // Check for "WARN" logs
-        if (logs.includes("WARN")) {
-          console.log("WE HAVE A WARNING");
-          handleLogUpdate(setLaunchLogsAll);
-          handleLogUpdate(setLaunchLogsWarn);
-        }
-
-        // Check for "DEBUG" logs
-        if (logs.includes("DEBUG")) {
-          console.log("WE HAVE A DEBUG LOG");
-          handleLogUpdate(setLaunchLogsAll);
-          handleLogUpdate(setLaunchLogsDebug);
-        }
-
-        // Check for "INFO" logs
-        if (logs.includes("INFO")) {
-          console.log("WE HAVE AN INFO LOG");
-          handleLogUpdate(setLaunchLogsAll);
-          handleLogUpdate(setLaunchLogsInfo);
-        }
-
-        // Always update the "ALL" logs
-        handleLogUpdate(setLaunchLogsAll);
-
-        // if logs includes one of the package names, add it to the launchLogsComponent state
-        if (folders.some((name) => logs.includes(name))) {
-          setLaunchLogsComponent((prev) => {
-            const newLogs = [...prev];
-            const index = newLogs.findIndex((log) => logs.includes(log.name));
-            if (index !== -1) {
-              const updatedLogs = new Set(newLogs[index].logs);
-              updatedLogs.add(logs);
-              if (updatedLogs.size > 100) {
-                newLogs[index].logs = [...updatedLogs].slice(-50);
-              } else {
-                newLogs[index].logs = [...updatedLogs];
+              const newSet = new Set(clonedPrevArray);
+              newSet.add(logs);
+              if (newSet.size > 100) {
+                return [...newSet].slice(-50);
               }
-            } else {
-              newLogs.push({
-                name: folders.find((name) => logs.includes(name)) ?? "",
-                logs: [...new Set([logs])],
-              });
-            }
-            return newLogs;
-          });
+              return [...newSet];
+            });
+          };
+
+          // Check for "ERROR" logs
+          if (logs.includes("ERROR")) {
+            console.log("WE HAVE AN ERROR");
+            handleLogUpdate(setLaunchLogsAll);
+            handleLogUpdate(setLaunchLogsError);
+          }
+
+          // Check for "WARN" logs
+          if (logs.includes("WARN")) {
+            console.log("WE HAVE A WARNING");
+            handleLogUpdate(setLaunchLogsAll);
+            handleLogUpdate(setLaunchLogsWarn);
+          }
+
+          // Check for "DEBUG" logs
+          if (logs.includes("DEBUG")) {
+            console.log("WE HAVE A DEBUG LOG");
+            handleLogUpdate(setLaunchLogsAll);
+            handleLogUpdate(setLaunchLogsDebug);
+          }
+
+          // Check for "INFO" logs
+          if (logs.includes("INFO")) {
+            console.log("WE HAVE AN INFO LOG");
+            handleLogUpdate(setLaunchLogsAll);
+            handleLogUpdate(setLaunchLogsInfo);
+          }
+
+          // Always update the "ALL" logs
+          handleLogUpdate(setLaunchLogsAll);
+
+          // if logs includes one of the package names, add it to the launchLogsComponent state
+          if (folders.some((name) => logs.includes(name))) {
+            setLaunchLogsComponent((prev) => {
+              const newLogs = [...prev];
+              const index = newLogs.findIndex((log) => logs.includes(log.name));
+              if (index !== -1) {
+                const updatedLogs = new Set(newLogs[index].logs);
+                updatedLogs.add(logs);
+                if (updatedLogs.size > 100) {
+                  newLogs[index].logs = [...updatedLogs].slice(-50);
+                } else {
+                  newLogs[index].logs = [...updatedLogs];
+                }
+              } else {
+                newLogs.push({
+                  name: folders.find((name) => logs.includes(name)) ?? "",
+                  logs: [...new Set([logs])],
+                });
+              }
+              return newLogs;
+            });
+          }
+        },
+        {
+          target: "main",
         }
-      });
+      );
 
       return () => {
         unlistenLaunchLogs();

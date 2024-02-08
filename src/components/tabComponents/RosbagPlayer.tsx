@@ -120,44 +120,68 @@ const RosbagPlayer = () => {
   // listen to rosbag status
   useEffect(() => {
     const init = async () => {
-      const unlistenStatus = await listen("rosbag-status", (data) => {
-        const status = data.payload as string;
-        if (status !== "unknown")
+      const unlistenStatus = await listen(
+        "rosbag-status",
+        (data) => {
+          const status = data.payload as string;
+          if (status !== "unknown")
+            toast({
+              title: "Rosbag Status",
+              description: `The rosbag is currently ${status}`,
+            });
+        },
+        {
+          target: "main",
+        }
+      );
+
+      const unlistenStarted = await listen(
+        "rosbag-started",
+        () => {
+          setIsPlaying(true);
+
           toast({
-            title: "Rosbag Status",
-            description: `The rosbag is currently ${status}`,
+            title: "Rosbag ready to play",
+            description: "Rosbag Playback Ready",
           });
-      });
+        },
+        {
+          target: "main",
+        }
+      );
 
-      const unlistenStarted = await listen("rosbag-started", () => {
-        setIsPlaying(true);
+      const unlistenEnded = await listen(
+        "rosbag-ended",
+        () => {
+          setIsPlaying(false);
+          setPlaybackRate(1);
 
-        toast({
-          title: "Rosbag ready to play",
-          description: "Rosbag Playback Ready",
-        });
-      });
+          toast({
+            title: "Rosbag ended",
+            description: "Rosbag Playback Ended",
+          });
+        },
+        {
+          target: "main",
+        }
+      );
 
-      const unlistenEnded = await listen("rosbag-ended", () => {
-        setIsPlaying(false);
-        setPlaybackRate(1);
+      const unlistenStopped = await listen(
+        "rosbag-stopped",
+        () => {
+          setIsPlaying(false);
+          setPlaybackRate(1);
 
-        toast({
-          title: "Rosbag ended",
-          description: "Rosbag Playback Ended",
-        });
-      });
-
-      const unlistenStopped = await listen("rosbag-stopped", () => {
-        setIsPlaying(false);
-        setPlaybackRate(1);
-
-        toast({
-          title: "Rosbag stopped",
-          description: "Rosbag Playback Stopped",
-          variant: "destructive",
-        });
-      });
+          toast({
+            title: "Rosbag stopped",
+            description: "Rosbag Playback Stopped",
+            variant: "destructive",
+          });
+        },
+        {
+          target: "main",
+        }
+      );
 
       return () => {
         unlistenStatus();
