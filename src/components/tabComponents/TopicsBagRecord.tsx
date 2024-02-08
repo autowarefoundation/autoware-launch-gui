@@ -93,6 +93,9 @@ const TopicsBagRecord = () => {
               return [...prev, echoOutput];
             }
           });
+        },
+        {
+          target: "main",
         }
       );
 
@@ -108,26 +111,41 @@ const TopicsBagRecord = () => {
               return [...prev, bagRecordOutput];
             }
           });
+        },
+        {
+          target: "main",
         }
       );
 
-      const unlistenEchoKilled = await listen("topic-echo-killed", () => {
-        setIsEchoing(false);
-        toast({
-          title: "Topic Echo Killed",
-          description: "Topic Echo has been killed.",
-          variant: "destructive",
-        });
-      });
+      const unlistenEchoKilled = await listen(
+        "topic-echo-killed",
+        () => {
+          setIsEchoing(false);
+          toast({
+            title: "Topic Echo Killed",
+            description: "Topic Echo has been killed.",
+            variant: "destructive",
+          });
+        },
+        {
+          target: "main",
+        }
+      );
 
-      const unlistenBagRecordKilled = await listen("bag-record-killed", () => {
-        setIsRecording(false);
-        toast({
-          title: "Bag Record Killed",
-          description: "Bag Record has been killed.",
-          variant: "destructive",
-        });
-      });
+      const unlistenBagRecordKilled = await listen(
+        "bag-record-killed",
+        () => {
+          setIsRecording(false);
+          toast({
+            title: "Bag Record Killed",
+            description: "Bag Record has been killed.",
+            variant: "destructive",
+          });
+        },
+        {
+          target: "main",
+        }
+      );
 
       await getTopics();
       return () => {

@@ -188,6 +188,9 @@ const CalibrationTools = () => {
           setElements(
             JSON.parse(msg.payload as string).elements as ElementData[]
           );
+        },
+        {
+          target: "main",
         }
       );
 
@@ -208,6 +211,9 @@ const CalibrationTools = () => {
             }
             return prev;
           });
+        },
+        {
+          target: "main",
         }
       );
 

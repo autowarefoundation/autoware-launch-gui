@@ -23,7 +23,6 @@ import {
   selectedLaunchArgsAtom,
   sshHostAtom,
   sshIsConnectedAtom,
-  sshPasswordAtom,
   sshUsernameAtom,
   userEditedArgsAtom,
 } from "@/app/jotai/atoms";
@@ -55,18 +54,32 @@ const Launch = () => {
         "close_requested",
         async (msg) => {
           await invoke("kill_autoware_process", {});
-
-          Window.getCurrent().close();
+          await Window.getCurrent().destroy();
+        },
+        {
+          target: "main",
         }
       );
 
-      const unlistenPidsLen = await listen("pids_len", (msg) => {
-        setPidsLen(msg.payload as number);
-      });
+      const unlistenPidsLen = await listen(
+        "pids_len",
+        (msg) => {
+          setPidsLen(msg.payload as number);
+        },
+        {
+          target: "main",
+        }
+      );
 
-      const unlistenPidsCleared = await listen("pids-cleared", (msg) => {
-        setPidsLen(0);
-      });
+      const unlistenPidsCleared = await listen(
+        "pids-cleared",
+        (msg) => {
+          setPidsLen(0);
+        },
+        {
+          target: "main",
+        }
+      );
 
       const unlistenAutowareLaunchFileParsed = await listen(
         "receiveTree",
@@ -74,17 +87,26 @@ const Launch = () => {
           setElements(
             JSON.parse(msg.payload as string).elements as ElementData[]
           );
+        },
+        {
+          target: "main",
         }
       );
 
-      const unlistenPackageNotFound = await listen("package-not-found", () => {
-        toast({
-          title: "Caught an Exception",
-          description:
-            "Exception hit, please check the error logs or try running the app from the terminal `autoware-launch-gui`",
-          variant: "destructive",
-        });
-      });
+      const unlistenPackageNotFound = await listen(
+        "package-not-found",
+        () => {
+          toast({
+            title: "Caught an Exception",
+            description:
+              "Exception hit, please check the error logs or try running the app from the terminal `autoware-launch-gui`",
+            variant: "destructive",
+          });
+        },
+        {
+          target: "main",
+        }
+      );
 
       return () => {
         unlistenCloseRequest();
