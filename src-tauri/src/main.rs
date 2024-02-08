@@ -5,7 +5,7 @@
 
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
-use tauri::menu::{MenuBuilder, MenuItemBuilder};
+use tauri::menu::MenuBuilder;
 use tauri::Manager;
 use tokio::process::Command as TokioCommand;
 use tokio::time::sleep;
@@ -191,7 +191,7 @@ fn files_in_dir(map_path: String) -> Vec<String> {
 async fn show_main_window(app: tauri::AppHandle, flag: Arc<Mutex<bool>>) {
     // get the main window and show it
 
-    let main_window = app.get_window("main").unwrap();
+    let main_window = app.get_webview_window("main").unwrap();
     main_window.hide().unwrap();
 
     sleep(Duration::from_secs(2)).await;
@@ -254,7 +254,7 @@ async fn main() {
                 show_main_window(app_for_async, flag_for_async).await;
             });
 
-            let splash_window = app.get_window("splash").unwrap();
+            let splash_window = app.get_webview_window("splash").unwrap();
             let flag_for_thread = flag.clone();
 
             // periodically check the flag to close the splash window
@@ -270,7 +270,7 @@ async fn main() {
             });
 
             // if user closes the main window, we prevent the app from closing and run the kill_autoware_process command before closing then close the app
-            let main_window = app.get_window("main").unwrap();
+            let main_window = app.get_webview_window("main").unwrap();
             let main_clone = main_window.clone();
 
             main_window.on_window_event(move |event| match event {
@@ -287,10 +287,11 @@ async fn main() {
                 }
             });
 
-            let show_hide = MenuItemBuilder::with_id("toggle", "Show/Hide").build(app);
-            let quit = MenuItemBuilder::with_id("quit", "Quit").build(app);
-
-            let menu = MenuBuilder::new(app).items(&[&show_hide, &quit]).build()?;
+            let menu = MenuBuilder::new(app)
+                .check("toggle", "Show/Hide")
+                .separator()
+                .text("quit", "Quit")
+                .build()?;
 
             // get access to the tray from app state
             let tray = app.tray();
@@ -301,7 +302,7 @@ async fn main() {
 
                     tray.on_menu_event(move |app, event| match event.id().0.as_str() {
                         "toggle" => {
-                            let main_window = app.get_window("main").unwrap();
+                            let main_window = app.get_webview_window("main").unwrap();
                             if main_window.is_visible().unwrap() {
                                 main_window.hide().unwrap();
                             } else {
@@ -309,8 +310,10 @@ async fn main() {
                             }
                         }
                         "quit" => {
-                            let main_window = app.get_window("main").unwrap();
-                            main_window.close().unwrap();
+                            let main_window = app.get_webview_window("main").unwrap();
+                            main_window
+                                .emit("close_requested", "close requested")
+                                .unwrap();
                         }
                         _ => {
                             println!("Unknown menu item: {}", event.id().0);
