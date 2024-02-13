@@ -29,10 +29,13 @@ Autoware Launch GUI offers a range of features to enhance your experience with A
 - **Remote Operation**: Use SSH to launch Autoware on a remote machine with custom parameters.
 
 ## Dependencies
+
 To run the .deb file directly you will need to first check if these dependencies are installed.
-```
+
+```bash
 sudo apt install libwebkit2gtk-4.1-0 libjavascriptcoregtk-4.1-0 libsoup-3.0-0 libsoup-3.0-common
 ```
+
 To develop the Autoware Launch GUI, you'll need to have both Rust and Node.js installed on your system.
 
 ### Installing Rust
@@ -89,6 +92,20 @@ Once Rust and Node.js are set up, you can proceed with the [Installation](#insta
 For most users, the easiest way to get started is by downloading and installing the provided `.deb` file.
 It can be found on the releases for this repo at this link [Releases](https://github.com/leo-drive/autoware-launch-gui/releases/)
 
+- After downloading the `.deb` file, navigate to the file in your terminal and run:
+
+  ```bash
+  sudo apt install ./autoware-launch-gui_{version}_amd64.deb
+  ```
+
+  Replace `{version}` with the version of the `.deb` file you downloaded.
+
+- Once installed, you can launch the Autoware Launch GUI from your applications menu or by running in your terminal(this is preferred as it will show you the logs in case of any errors):
+
+  ```bash
+  autoware-launch-gui
+  ```
+
 ### For Developers
 
 If you're interested in developing additional features or want to run the project from source:
@@ -133,7 +150,7 @@ For a comprehensive guide on how to use the Autoware Launch GUI, please refer to
 
 6. Separately, you can also edit config param yaml files located in the `src/launcher/autoware_launch/autoware_launch/config` folder.
 
-## WIP
+## Work in Progress (WIP)
 
 - [x] Launch Autoware with Custom Parameters depending on the selected launch file
 - [x] Kill Autoware Processes
@@ -149,6 +166,15 @@ For a comprehensive guide on how to use the Autoware Launch GUI, please refer to
 - [x] View Topic Echo Output
 - [x] Save and Load most used Profiles with your autoware directories and launch files...
 - [x] use SSH to launch autoware on a remote machine with custom parameters
+- [x] Topic Publishing with custom flags
+- [x] Service Call with rate flag
+- [x] Autostart GUI on boot (through settings page)
+- [x] Add more workspaces to source for functionalities in the app (through settings page)
+- [x] Change the theme of the app (through settings page)
+- [x] Tray Icon to minimize the app to the tray, launch/kill autoware and kill the app
+- [x] CLI command to launch autoware faster on app launch (autoware-launch-gui -s or --start-autoware)
+- [x] CLI command to open the app in hidden mode (autoware-launch-gui --hidden)
+- [x] CLI command to see description or version of the app (autoware-launch-gui -v --version or -h --help)
 
 ## Contributing
 
