@@ -5,11 +5,10 @@ pub fn setup_tray(app: &tauri::AppHandle) -> Result<(), tauri::Error> {
     let icon = app.default_window_icon().unwrap();
 
     let menu = MenuBuilder::new(app)
-        .text("toggle", "Show/Hide")
-        .separator()
         .text("start_autoware", "Start Autoware")
-        .separator()
         .text("kill_autoware", "Kill Autoware")
+        .separator()
+        .text("toggle", "Show/Hide")
         .separator()
         .text("quit", "Quit")
         .build()?;
