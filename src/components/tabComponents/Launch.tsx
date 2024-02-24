@@ -443,12 +443,43 @@ const Launch = () => {
           })) as string;
         }
         return;
+      } else if (mapFileAttributesValuesFound.length === 1) {
+        if (!mapPathContentFiles.some((file) => file.endsWith(".pcd"))) {
+          toast({
+            variant: "destructive",
+            title: "Error",
+            description: `The "pointcloud_map" file was not found in the map_path directory`,
+          });
+        } else if (!mapPathContentFiles.some((file) => file.endsWith(".osm"))) {
+          toast({
+            variant: "destructive",
+            title: "Error",
+            description: `The "lanelet2_map" file was not found in the map_path directory`,
+          });
+        } else {
+          toast({
+            variant: "destructive",
+            title: "Error",
+            description: `Check the name of map files in the map_path directory!`,
+          });
+        }
       } else {
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: `Please make sure you have the map files in the map_path directory`,
-        });
+        if (
+          mapFileAttributesValues.some((file) => file.endsWith(".osm")) ||
+          mapFileAttributesValues.some((file) => file.endsWith(".pcd"))
+        ) {
+          toast({
+            variant: "destructive",
+            title: "Error",
+            description: `Check the name of map files in the map_path directory!`,
+          });
+        } else {
+          toast({
+            variant: "destructive",
+            title: "Error",
+            description: `Please make sure you have the map files in the map_path directory`,
+          });
+        }
       }
     }
   }, [autowarePath, launchFilePath, parsedLaunchFile, userEditedArgs]);
