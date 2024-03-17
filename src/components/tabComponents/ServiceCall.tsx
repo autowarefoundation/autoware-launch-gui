@@ -34,6 +34,8 @@ const EMPTY_SERVICE: TopicsAndTypes = {
   type: "",
 };
 
+const isWindow = typeof window !== "undefined";
+
 const ServiceCall = () => {
   const [services, setServices] = useAtom(serviceListAtom);
   const [autowarePath, setAutowarePath] = useAtom(autowareFolderPathAtom);
@@ -57,6 +59,10 @@ const ServiceCall = () => {
   };
 
   const getServices = async () => {
+    // @ts-ignore
+    if (!(isWindow && window.__TAURI__)) {
+      return;
+    }
     const topicsWithTypes = (await invoke("get_services", {})) as string[];
     const topicsAndTypes = topicsWithTypes.map((topicWithType) => {
       const [topic, type] = topicWithType.split(" ");
@@ -67,6 +73,10 @@ const ServiceCall = () => {
   };
 
   const getMessageInterface = async (topic: TopicsAndTypes) => {
+    // @ts-ignore
+    if (!(isWindow && window.__TAURI__)) {
+      return;
+    }
     try {
       const messageInterface = (await invoke("get_message_interface", {
         messageType: topic.type,
@@ -85,6 +95,10 @@ const ServiceCall = () => {
   };
 
   const callService = async () => {
+    // @ts-ignore
+    if (!(isWindow && window.__TAURI__)) {
+      return;
+    }
     const flattenedMessageWithNoExtraLines =
       textAreaRef.current!.value.replaceAll("\n", " ");
 
@@ -103,12 +117,20 @@ const ServiceCall = () => {
   };
 
   const killService = async () => {
+    // @ts-ignore
+    if (!(isWindow && window.__TAURI__)) {
+      return;
+    }
     await invoke("kill_service_call", {});
     setServiceOutput((prev) => [...prev, "Killed service call"]);
   };
 
   useEffect(() => {
     getServices();
+    // @ts-ignore
+    if (!(isWindow && window.__TAURI__)) {
+      return;
+    }
     async function getServiceCallOutput() {
       const unlistenServiceCallOutput = await listen<string>(
         "ros2-service-call-output",

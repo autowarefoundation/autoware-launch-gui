@@ -57,6 +57,8 @@ export const Settings = dynamic(
   }
 );
 
+const isWindow = typeof window !== "undefined";
+
 export default function App() {
   const [autowareFolderPath, setAutowareFolderPath] = useAtom(
     autowareFolderPathAtom
@@ -106,11 +108,14 @@ export default function App() {
   };
 
   React.useEffect(() => {
-    updateUsage();
-    const interval = setInterval(() => {
+    // @ts-ignore
+    if (isWindow && window.__TAURI__) {
       updateUsage();
-    }, 1000);
-    return () => clearInterval(interval);
+      const interval = setInterval(() => {
+        updateUsage();
+      }, 1000);
+      return () => clearInterval(interval);
+    }
   }, [autowareFolderPath]);
   const [tab] = useAtom(tabAtom);
 

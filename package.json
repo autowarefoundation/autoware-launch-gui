@@ -7,6 +7,7 @@
     "dev": "next dev -p 1420",
     "build": "next build",
     "format": "npx prettier --write . --ignore-path .gitignore ",
+    "lint": "npx eslint . --ext .ts,.tsx",
     "taze": "taze major -I",
     "taze:minor": "taze minor -w",
     "tauri": "tauri"

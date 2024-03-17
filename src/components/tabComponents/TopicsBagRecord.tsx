@@ -44,6 +44,8 @@ export const groupByPrefix = (topics: TopicsAndTypes[]) => {
   return grouped;
 };
 
+const isWindow = typeof window !== undefined;
+
 const TopicsBagRecord = () => {
   const [topics, setTopics] = useAtom(topicListAtom);
   const [selectedTopics, setSelectedTopics] = useAtom(selectedTopicsAtom);
@@ -62,6 +64,10 @@ const TopicsBagRecord = () => {
   const { toast } = useToast();
 
   const getTopics = async () => {
+    // @ts-ignore
+    if (!(isWindow && window.__TAURI__)) {
+      return;
+    }
     const topicsWithTypes = (await invoke("get_topics", {})) as string[];
     const topicsAndTypes = topicsWithTypes.map((topicWithType) => {
       const [topic, type] = topicWithType.split(" ");
@@ -80,6 +86,10 @@ const TopicsBagRecord = () => {
   };
 
   useEffect(() => {
+    // @ts-ignore
+    if (!(isWindow && window.__TAURI__)) {
+      return;
+    }
     async function init() {
       const unlistenTopicEcho = await listen(
         "ros2-topic-echo-output",
@@ -159,6 +169,10 @@ const TopicsBagRecord = () => {
   }, []);
 
   const handleTopicEcho = async () => {
+    // @ts-ignore
+    if (!(isWindow && window.__TAURI__)) {
+      return;
+    }
     if (selectedTopics.length === 1) {
       await invoke("start_topic_echo", {
         topic: selectedTopics[0].topicName,
@@ -172,6 +186,10 @@ const TopicsBagRecord = () => {
   };
 
   const handleKillEcho = async () => {
+    // @ts-ignore
+    if (!(isWindow && window.__TAURI__)) {
+      return;
+    }
     await invoke("kill_topic_echo", {});
   };
 
@@ -180,6 +198,10 @@ const TopicsBagRecord = () => {
   };
 
   const handleRecordBag = async () => {
+    // @ts-ignore
+    if (!(isWindow && window.__TAURI__)) {
+      return;
+    }
     setIsRecording(true);
     await invoke("start_bag_record", {
       bagName: userEditedBagRecordFlags.find((flag) => flag.arg === "--output")
@@ -194,6 +216,10 @@ const TopicsBagRecord = () => {
   };
 
   const handleStopRecording = async () => {
+    // @ts-ignore
+    if (!(isWindow && window.__TAURI__)) {
+      return;
+    }
     setIsRecording(false);
     await invoke("kill_bag_record", {});
 

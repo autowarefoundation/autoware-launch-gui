@@ -33,6 +33,8 @@ import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { toast } from "./ui/use-toast";
 
+const isWindow = typeof window !== "undefined";
+
 const launchableTools = [
   "deviation_estimator",
   "deviation_evaluator",
@@ -181,6 +183,10 @@ const CalibrationTools = () => {
   walkTreeItems(elements);
 
   useEffect(() => {
+    // @ts-ignore
+    if (!(isWindow && window.__TAURI__)) {
+      return;
+    }
     async function getLaunchFiles() {
       const unlistenCalibrationLaunchFileParsed = await listen(
         "receiveTreeCalibration",
@@ -222,12 +228,16 @@ const CalibrationTools = () => {
         unlistenCalibrationToolLaunchOutput();
       };
     }
-
     getLaunchFiles();
   }, []);
 
   const handleParseLaunchFile = useCallback(
     async (tool: string) => {
+      // @ts-ignore
+      if (!(isWindow && window.__TAURI__)) {
+        return;
+      }
+
       if (isToolRunning.includes(tool)) {
         setParsedFilePath(calibrationToolPaths[tool]);
         setSelectedTool(tool);
@@ -330,6 +340,10 @@ const CalibrationTools = () => {
 
   const handleLaunchTool = useCallback(
     async (tool: string, toolPath: string) => {
+      // @ts-ignore
+      if (!(isWindow && window.__TAURI__)) {
+        return;
+      }
       const commandToBeLaunched = commandGeneratorForToolLaunching(
         tool,
         toolPath,
@@ -362,6 +376,10 @@ const CalibrationTools = () => {
   );
 
   const handleKillTool = useCallback(async (tool: string) => {
+    // @ts-ignore
+    if (!(isWindow && window.__TAURI__)) {
+      return;
+    }
     setLog((prev) => [...prev, "Killing the tool"]);
     const res = await invoke("kill_calibration_tool", {
       tool,

@@ -114,7 +114,7 @@ type TreeItemProps = TreeProps & {
   FolderIcon?: LucideIcon;
   ItemIcon?: LucideIcon;
 };
-
+const isWindow = typeof window !== undefined;
 const TreeItem = React.forwardRef<HTMLDivElement, TreeItemProps>(
   (
     {
@@ -191,6 +191,10 @@ const TreeItem = React.forwardRef<HTMLDivElement, TreeItemProps>(
                             } w-fit self-end`}
                             // save changes
                             onClick={async () => {
+                              // @ts-ignore
+                              if (!(isWindow && window.__TAURI__)) {
+                                return;
+                              }
                               const textRead = await readTextFile(
                                 parsedLaunchFilePath
                               );

@@ -8,12 +8,18 @@ import { Button } from "./ui/button";
 import { Textarea } from "./ui/textarea";
 import { toast } from "./ui/use-toast";
 
+const isWindow = typeof window !== undefined;
+
 const ReadConfig: React.FC = () => {
   const [fileContent, setFileContent] = useState<string | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [filePath, setFilePath] = useState<string | null>(null);
 
   const handleFileRead = async () => {
+    // @ts-ignore
+    if (!(isWindow && window.__TAURI__)) {
+      return;
+    }
     try {
       // Use the dialog plugin to open a file picker
       const paths = await open({
@@ -33,6 +39,10 @@ const ReadConfig: React.FC = () => {
   };
 
   const handleFileSave = async () => {
+    // @ts-ignore
+    if (!(isWindow && window.__TAURI__)) {
+      return;
+    }
     if (filePath && fileContent) {
       try {
         await writeTextFile(filePath, fileContent);

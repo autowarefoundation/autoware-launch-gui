@@ -2,7 +2,7 @@
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
-import { emit, listen, once } from "@tauri-apps/api/event";
+import { listen } from "@tauri-apps/api/event";
 import { Window } from "@tauri-apps/api/window";
 import { open } from "@tauri-apps/plugin-dialog";
 import { useAtom } from "jotai";
@@ -10,6 +10,7 @@ import { useAtom } from "jotai";
 import {
   autowareFolderPathAtom,
   autowareProcessesAtom,
+  isBagPlayingAtom,
   launchLogsAllAtom,
   launchLogsComponentAtom,
   launchLogsDebugAtom,
@@ -32,12 +33,15 @@ import { AutowareLaunchDialog } from "../AutowareLaunchDialog";
 import CalibrationTools from "../CalibrationTools";
 import { EditArgsDialog } from "../EditArgsDialog";
 import { ProfileSetup } from "../ProfileSetup";
-import type { ElementData } from "../Tree";
+import { type ElementData } from "../Tree";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
 import { useToast } from "../ui/use-toast";
+import { isJSONParsable } from "../WebSocket";
 import YAMLEdit from "./YamlEdit";
+
+const isWindow = typeof window !== "undefined";
 
 const Launch = () => {
   const [pidsLen, setPidsLen] = useAtom(pidsLengthAtom);
@@ -45,6 +49,40 @@ const Launch = () => {
   const [_launchFilePath, _setLaunchFilePath] = useAtom(
     parsedLaunchFilePathAtom
   );
+  const [socket, setSocket] = useState<WebSocket | null>(null);
+
+  useEffect(() => {
+    let ws: WebSocket;
+    if (isWindow) {
+      ws = new WebSocket("ws://localhost:42068/ws");
+      ws.onopen = () => {
+        console.log("connected to app/browser syncing websocket");
+
+        // @ts-ignore
+        if (window.__TAURI__) {
+          ws.send("Tauri-Launch");
+        } else {
+          ws.send("Browser-Launch");
+        }
+      };
+      ws.onclose = () => {
+        console.log("connection to app/browser syncing websocket closed");
+      };
+      ws.onerror = (e) => {
+        console.log("error from websocket", e);
+      };
+
+      setSocket(ws);
+    }
+
+    return () => {
+      if (ws) {
+        ws.close();
+      }
+    };
+  }, []);
+
+  const [tauriCommand, setTauriCommand] = useState("");
 
   const [parsedFilePath, setParsedFilePath] = useAtom(parsedLaunchFilePathAtom);
   const [launchFilePath, setLaunchFilePath] = useState(
@@ -70,18 +108,19 @@ const Launch = () => {
   );
 
   const [parsedLaunchFile, _] = useAtom(parsedLaunchFilesAtom);
-  const [_launchLogsAll, setLaunchLogsAll] = useAtom(launchLogsAllAtom);
-  const [_launchLogsInfo, setLaunchLogsInfo] = useAtom(launchLogsInfoAtom);
-  const [_launchLogsWarn, setLaunchLogsWarn] = useAtom(launchLogsWarnAtom);
-  const [_launchLogsError, setLaunchLogsError] = useAtom(launchLogsErrorAtom);
-  const [_launchLogsDebug, setLaunchLogsDebug] = useAtom(launchLogsDebugAtom);
-  const [_launchLogsComponent, setLaunchLogsComponent] = useAtom(
+  const [launchLogsAll, setLaunchLogsAll] = useAtom(launchLogsAllAtom);
+  const [launchLogsInfo, setLaunchLogsInfo] = useAtom(launchLogsInfoAtom);
+  const [launchLogsWarn, setLaunchLogsWarn] = useAtom(launchLogsWarnAtom);
+  const [launchLogsError, setLaunchLogsError] = useAtom(launchLogsErrorAtom);
+  const [launchLogsDebug, setLaunchLogsDebug] = useAtom(launchLogsDebugAtom);
+  const [launchLogsComponent, setLaunchLogsComponent] = useAtom(
     launchLogsComponentAtom
   );
 
   const [host, _setHost] = useAtom(sshHostAtom);
   const [user, _setUser] = useAtom(sshUsernameAtom);
   const [isSSHConnected, _setIsConnected] = useAtom(sshIsConnectedAtom);
+  const [, setIsBagPlaying] = useAtom(isBagPlayingAtom);
   const [autowareLaunchedInSSH, setAutowareLaunchedInSSH] = useState(false);
 
   // get all the arguments from the tree
@@ -91,17 +130,23 @@ const Launch = () => {
   }[] = [];
 
   const { toast } = useToast();
+
   useEffect(() => {
     setEditableCommand(`ros2 launch autoware_launch ${launchFilePath}`);
   }, [launchFilePath]);
 
   useEffect(() => {
+    // @ts-ignore
+    if (!(isWindow && window.__TAURI__)) {
+      return;
+    }
     async function init() {
       // TODO: Figure out the tauri-controls situation
       const unlistenCloseRequest = await listen(
         "close_requested",
         async (msg) => {
           await invoke("kill_autoware_process", {});
+          setIsBagPlaying(false);
           await Window.getCurrent().destroy();
         },
         {
@@ -112,7 +157,8 @@ const Launch = () => {
       const unlistenPidsLen = await listen(
         "pids_len",
         (msg) => {
-          setPidsLen(msg.payload as number);
+          if (typeof msg.payload === "number")
+            setPidsLen(msg.payload as number);
         },
         {
           target: "main",
@@ -168,6 +214,10 @@ const Launch = () => {
   }, []);
 
   useEffect(() => {
+    // @ts-ignore
+    if (!(isWindow && window.__TAURI__)) {
+      return;
+    }
     async function init() {
       const unlistenStartAutowareOnAppStart = await listen<boolean>(
         "start_autoware_on_app_start",
@@ -319,30 +369,26 @@ const Launch = () => {
     },
     [selectedArgs, userEditedArgs, editableCommand]
   );
-  // This effect updates userEditedArgs when the user manually edits the editableCommand input field // but not needed since it became read only
-  // useEffect(() => {
-  //   const argsFromCommand = editableCommand
-  //     .split(" ")
-  //     .slice(4)
-  //     .map((arg) => {
-  //       const [argName, argValue] = arg.split(":=");
-  //       return {
-  //         arg: argName,
-  //         value: argValue,
-  //       };
-  //     })
-  //     .filter((arg) => arg.arg && arg.value);
-
-  //   const baseCommand = `ros2 launch autoware_launch ${launchFilePath}`;
-  //   // we check if for whatever reason the user manually edited the command and removed the full path to the launch file
-  //   // if so, we add it back and make sure nothing can be added before it by using indexOf
-  //   if (editableCommand.indexOf(baseCommand) !== 0) {
-  //     setEditableCommand(baseCommand);
-  //   }
-  //   setUserEditedArgs(argsFromCommand);
-  // }, [editableCommand]);
 
   const handleLaunchAutoware = useCallback(async () => {
+    // @ts-ignore
+    if (!window.__TAURI__) {
+      if (socket) {
+        return socket.send(
+          JSON.stringify({
+            typeOfMessage: "launch",
+            message: { command: "launch-autoware" },
+          })
+        );
+      } else {
+        return toast({
+          variant: "destructive",
+          title: "Error",
+          description:
+            "Please check the socket connection, you might need to restart the app or refresh the page",
+        });
+      }
+    }
     if (!autowarePath) {
       toast({
         type: "foreground",
@@ -388,9 +434,9 @@ const Launch = () => {
 
     if (mapPathArg) {
       const mapPath = mapPathArg.value;
-      const mapPathContent = (await invoke("files_in_dir", {
+      const mapPathContent: string[] = await invoke("files_in_dir", {
         mapPath: mapPath,
-      })) as string[];
+      });
 
       // we need to only keep the filename with the extension
       // and remove the path to the file
@@ -446,12 +492,15 @@ const Launch = () => {
         setLaunchLogsComponent([]);
 
         if (!isSSHConnected) {
-          await invoke("launch_autoware", {
-            path: autowarePath,
-            launchFile: launchFilePath,
-            extraWorkspaces: extraWorkspacePaths,
-            argsToLaunch,
-          });
+          // @ts-ignore
+          if (isWindow && window.__TAURI__) {
+            await invoke("launch_autoware", {
+              path: autowarePath,
+              launchFile: launchFilePath,
+              extraWorkspaces: extraWorkspacePaths,
+              argsToLaunch,
+            });
+          }
         } else {
           // Construct the command arguments string dynamically
           const cmdArgs = argsToLaunch
@@ -464,11 +513,14 @@ const Launch = () => {
             `ros2 launch autoware_launch ${launchFilePath} ${cmdArgs}`;
 
           setAutowareLaunchedInSSH(true);
-          const result = (await invoke("execute_command_in_shell", {
-            command: cmdStr,
-            user,
-            host,
-          })) as string;
+          // @ts-ignore
+          if (isWindow && window.__TAURI__) {
+            await invoke("execute_command_in_shell", {
+              command: cmdStr,
+              user,
+              host,
+            });
+          }
         }
         return;
       } else {
@@ -479,9 +531,13 @@ const Launch = () => {
         });
       }
     }
-  }, [autowarePath, launchFilePath, parsedLaunchFile, userEditedArgs]);
+  }, [autowarePath, launchFilePath, parsedLaunchFile, userEditedArgs, socket]);
 
   const handleParseLaunchFile = useCallback(async () => {
+    // @ts-ignore
+    if (isWindow && !window.__TAURI__ && socket) {
+      return socket.send(JSON.stringify({ command: "parse-launch-file" }));
+    }
     const file = await open({
       // xml files
       defaultPath:
@@ -513,13 +569,180 @@ const Launch = () => {
     // const fileNameWithExtension = file.path.split("/").pop();
     setParsedFilePath(file.path);
     setUserEditedArgs([]);
-  }, [autowarePath]);
+  }, [autowarePath, socket]);
+
+  const handleKillAutoware = useCallback(async () => {
+    if (!isSSHConnected) {
+      // @ts-ignore
+      if (isWindow && !window.__TAURI__) {
+        if (socket) {
+          socket.send(
+            JSON.stringify({
+              typeOfMessage: "launch",
+              message: { command: "kill-autoware" },
+            })
+          );
+        }
+        // @ts-ignore
+      } else if (isWindow && window.__TAURI__) {
+        await invoke("kill_autoware_process", {});
+      }
+    } else {
+      // @ts-ignore
+      if (isWindow && !window.__TAURI__) {
+        if (socket) {
+          socket.send(
+            JSON.stringify({
+              typeOfMessage: "launch",
+              message: { command: "kill-ssh-connection" },
+            })
+          );
+        }
+        // @ts-ignore
+      } else if (isWindow && window.__TAURI__) {
+        await invoke("kill_ssh_connection", {});
+      }
+      _setIsConnected(false);
+      setAutowareLaunchedInSSH(false);
+
+      toast({
+        variant: "destructive",
+        title: "Autoware Killed in Remote Machine",
+        description:
+          "Autoware is closed and SSH Connection Closed Successfully",
+      });
+    }
+  }, [isSSHConnected, socket]);
+
+  const launchButtonRef = useRef<HTMLButtonElement>(null);
+  const killButtonRef = useRef<HTMLButtonElement>(null);
+  const parseLaunchFileButtonRef = useRef<HTMLButtonElement>(null);
+
+  const handleBrowserCalls = (tauriCommand: string) => {
+    switch (tauriCommand) {
+      case "launch-autoware":
+        setTauriCommand("");
+        launchButtonRef.current?.click();
+        break;
+      case "kill-autoware":
+        setTauriCommand("");
+        killButtonRef.current?.click();
+        break;
+      case "parse-launch-file":
+        setTauriCommand("");
+        parseLaunchFileButtonRef.current?.click();
+        break;
+      default:
+        break;
+    }
+  };
+
+  useEffect(() => {
+    handleBrowserCalls(tauriCommand);
+  }, [tauriCommand, socket]);
+
+  const handleTauriMessages = () => {
+    // @ts-ignore
+    if (isWindow && window.__TAURI__) {
+      if (socket) {
+        socket.send(
+          JSON.stringify({
+            typeOfMessage: "pids_len",
+            message: { pids_len: pidsLen },
+          })
+        );
+        socket.send(
+          JSON.stringify({
+            typeOfMessage: "launchlogs",
+            message: {
+              launchLogsAll,
+              launchLogsComponent,
+              launchLogsDebug,
+              launchLogsError,
+              launchLogsInfo,
+              launchLogsWarn,
+            },
+          })
+        );
+      }
+      // @ts-ignore
+    } else if (isWindow && !window.__TAURI__) {
+      if (socket) {
+        socket.onmessage = (event) => {
+          const data = JSON.parse(event.data);
+          if (isJSONParsable(data.message)) {
+            const parsedData = JSON.parse(data.message) as {
+              typeOfMessage: string;
+              message: {
+                pids_len: number;
+                launchLogsAll: string[];
+                launchLogsComponent: { name: string; logs: string[] }[];
+                launchLogsDebug: string[];
+                launchLogsError: string[];
+                launchLogsInfo: string[];
+                launchLogsWarn: string[];
+              };
+            };
+            if (parsedData.typeOfMessage === "pids_len")
+              setPidsLen(parsedData.message.pids_len);
+            if (parsedData.typeOfMessage === "launchlogs") {
+              setLaunchLogsAll(parsedData.message.launchLogsAll);
+              setLaunchLogsComponent(parsedData.message.launchLogsComponent);
+              setLaunchLogsDebug(parsedData.message.launchLogsDebug);
+              setLaunchLogsError(parsedData.message.launchLogsError);
+              setLaunchLogsInfo(parsedData.message.launchLogsInfo);
+              setLaunchLogsWarn(parsedData.message.launchLogsWarn);
+            }
+          }
+        };
+      }
+    }
+  };
+
+  const handleButtonCallsFromBrowser = () => {
+    // @ts-ignore
+    if (isWindow && window.__TAURI__) {
+      if (socket) {
+        socket.onmessage = (event) => {
+          const data = JSON.parse(event.data);
+          if (isJSONParsable(data.message)) {
+            const parsedData = JSON.parse(data.message) as {
+              typeOfMessage: string;
+              message: {
+                command: string;
+              };
+            };
+            if (parsedData.typeOfMessage === "launch")
+              setTauriCommand(parsedData.message.command);
+          }
+        };
+      }
+    }
+  };
+
+  useEffect(() => {
+    handleButtonCallsFromBrowser();
+  }, [socket, tauriCommand]);
+
+  useEffect(() => {
+    handleTauriMessages();
+  }, [
+    pidsLen,
+    launchLogsAll,
+    launchLogsComponent,
+    launchLogsDebug,
+    launchLogsError,
+    launchLogsInfo,
+    launchLogsWarn,
+    socket,
+  ]);
 
   return (
     <div className="flex h-full w-full flex-col gap-4">
       <div className="flex flex-row gap-4">
         <AutowareLaunchDialog />
         <Button
+          ref={parseLaunchFileButtonRef}
           onClick={async () => {
             await handleParseLaunchFile();
           }}
@@ -530,6 +753,7 @@ const Launch = () => {
           {launchFilePath ? launchFilePath : "Select A Launch File"}
         </Button>
         <Button
+          ref={launchButtonRef}
           onClick={async () => {
             await handleLaunchAutoware();
           }}
@@ -548,21 +772,9 @@ const Launch = () => {
             : "Launch Autoware"}
         </Button>
         <Button
+          ref={killButtonRef}
           onClick={async () => {
-            if (!isSSHConnected) {
-              await invoke("kill_autoware_process", {});
-            } else {
-              const response = await invoke("kill_ssh_connection", {});
-              _setIsConnected(false);
-              setAutowareLaunchedInSSH(false);
-
-              toast({
-                variant: "destructive",
-                title: "Autoware Killed in Remote Machine",
-                description:
-                  "Autoware is closed and SSH Connection Closed Successfully",
-              });
-            }
+            await handleKillAutoware();
           }}
           className="w-fit"
           disabled={

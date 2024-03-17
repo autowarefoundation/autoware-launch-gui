@@ -44,6 +44,8 @@ const bagFileInfoSchema = z.object({
 
 export type bagFileInfoType = z.infer<typeof bagFileInfoSchema>;
 
+const isWindow = typeof window !== "undefined";
+
 // Adjust the import path based on your setup
 
 const RosbagPlayer = () => {
@@ -61,6 +63,10 @@ const RosbagPlayer = () => {
   const { toast } = useToast();
 
   const handleFileOpen = async () => {
+    // @ts-ignore
+    if (!(isWindow && window.__TAURI__)) {
+      return;
+    }
     try {
       const file = await open({
         title: "Select a .db3 or .mcap file",
@@ -94,6 +100,10 @@ const RosbagPlayer = () => {
   };
 
   const handleRosbagPlay = async () => {
+    // @ts-ignore
+    if (!(isWindow && window.__TAURI__)) {
+      return;
+    }
     const res = await invoke("play_rosbag", {
       path: selectedFile?.path,
       autowarePath: autowareFolderPath,
@@ -103,15 +113,27 @@ const RosbagPlayer = () => {
   };
 
   const handleRosbagPause = async () => {
+    // @ts-ignore
+    if (!(isWindow && window.__TAURI__)) {
+      return;
+    }
     const res = await invoke("toggle_pause_state", {});
   };
 
   const handleRosbagStop = async () => {
+    // @ts-ignore
+    if (!(isWindow && window.__TAURI__)) {
+      return;
+    }
     const res = await invoke("stop_rosbag_play", {});
     setIsPlaying(false);
   };
 
   const handleRosbagRate = async () => {
+    // @ts-ignore
+    if (!(isWindow && window.__TAURI__)) {
+      return;
+    }
     const res = await invoke("set_rosbag_playback_rate", {
       rate: playbackRate,
     });
@@ -119,6 +141,10 @@ const RosbagPlayer = () => {
 
   // listen to rosbag status
   useEffect(() => {
+    // @ts-ignore
+    if (!(isWindow && window.__TAURI__)) {
+      return;
+    }
     const init = async () => {
       const unlistenStatus = await listen(
         "rosbag-status",

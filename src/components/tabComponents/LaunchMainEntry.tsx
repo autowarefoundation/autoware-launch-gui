@@ -1,5 +1,6 @@
 "use client";
 
+import { useCallback, useEffect, useState } from "react";
 import { BarChart } from "@tremor/react";
 import { useAtom } from "jotai";
 import { Loader2 } from "lucide-react";
@@ -14,20 +15,116 @@ import {
 } from "@/app/jotai/atoms";
 
 import { Progress } from "../ui/progress";
+import { isJSONParsable } from "../WebSocket";
 import Launch from "./Launch";
 
+const isWindow = typeof window !== "undefined";
+
 const LaunchMainEntry = () => {
-  const [cpuUsage, _setCpuUsage] = useAtom(cpuUsageAtom);
-  const [memoryUsage, _setMemoryUsage] = useAtom(memoryUsageAtom);
-  const [memoryUsagePercentage, _setMemoryUsagePercentage] = useAtom(
+  const [cpuUsage, setCpuUsage] = useAtom(cpuUsageAtom);
+  const [memoryUsage, setMemoryUsage] = useAtom(memoryUsageAtom);
+  const [memoryUsagePercentage, setMemoryUsagePercentage] = useAtom(
     memoryUsagePercentageAtom
   );
-  const [cpusUsage, _setCpusUsage] = useAtom(cpusUsageAtom);
-  const [topProcesses, _setTopProcesses] = useAtom(topProcessesAtom);
+  const [cpusUsage, setCpusUsage] = useAtom(cpusUsageAtom);
+  const [topProcesses, setTopProcesses] = useAtom(topProcessesAtom);
+  const [socket, setSocket] = useState<WebSocket | null>(null);
+
+  useEffect(() => {
+    let ws: WebSocket;
+    if (isWindow) {
+      ws = new WebSocket("ws://localhost:42068/ws");
+      ws.onopen = () => {
+        console.log("connected to app/browser syncing websocket");
+
+        // @ts-ignore
+        if (window.__TAURI__) {
+          ws.send("Tauri-systemInfo");
+        } else {
+          ws.send("Browser-systemInfo");
+        }
+      };
+      ws.onclose = () => {
+        console.log("connection to app/browser syncing websocket closed");
+      };
+      ws.onerror = (e) => {
+        console.log("error from websocket", e);
+      };
+
+      setSocket(ws);
+    }
+
+    return () => {
+      if (ws) {
+        ws.close();
+      }
+    };
+  }, []);
+
+  const handleTauriMessages = () => {
+    // @ts-ignore
+    if (isWindow && window.__TAURI__) {
+      if (socket) {
+        socket.send(
+          JSON.stringify({
+            typeOfMessage: "getSystemInfo",
+            message: {
+              cpuUsage,
+              memoryUsage,
+              cpusUsage,
+              topProcesses,
+              memoryUsagePercentage,
+            },
+          })
+        );
+      }
+      // @ts-ignore
+    } else if (isWindow && !window.__TAURI__) {
+      if (socket) {
+        socket.onmessage = (event) => {
+          const data = JSON.parse(event.data);
+          if (isJSONParsable(data.message)) {
+            const parsedData = JSON.parse(data.message) as {
+              typeOfMessage: string;
+              message: {
+                cpuUsage: number;
+                memoryUsage: string;
+                cpusUsage: number[];
+                topProcesses: { name: string; cpu_usage: number }[];
+                memoryUsagePercentage: number;
+              };
+            };
+
+            if (parsedData.typeOfMessage === "getSystemInfo") {
+              setCpuUsage(parsedData.message.cpuUsage);
+              setMemoryUsage(parsedData.message.memoryUsage);
+              setCpusUsage(parsedData.message.cpusUsage);
+              setTopProcesses(parsedData.message.topProcesses);
+              setMemoryUsagePercentage(
+                parsedData.message.memoryUsagePercentage
+              );
+            }
+          }
+        };
+      }
+    }
+  };
+
+  useEffect(() => {
+    handleTauriMessages();
+  }, [
+    handleTauriMessages,
+    cpuUsage,
+    memoryUsage,
+    cpusUsage,
+    topProcesses,
+    memoryUsagePercentage,
+  ]);
 
   return (
     <div className="flex h-full w-full flex-col gap-4">
       <Launch />
+      {/* @ts-ignore */}
 
       <div className="flex h-full w-full flex-row gap-4 font-mono">
         {cpusUsage.every((u) => u === 0) &&
@@ -41,7 +138,7 @@ const LaunchMainEntry = () => {
             <span className="sr-only">Loading...</span>
           </div>
         ) : (
-          <>
+          <div className="flex h-full w-full gap-2">
             <div
               className={cn(
                 "w-2/3 flex-1 rounded-lg border p-2",
@@ -90,7 +187,7 @@ const LaunchMainEntry = () => {
                 className="h-4 w-[90%] self-center"
               />
             </div>
-          </>
+          </div>
         )}
       </div>
     </div>

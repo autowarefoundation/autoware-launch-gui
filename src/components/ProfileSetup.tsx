@@ -53,6 +53,8 @@ const ProfileDataSchema = z.object({
   ),
 });
 
+const isWindow = typeof window !== undefined;
+
 export function ProfileSetup() {
   const triggerRef = useRef<HTMLButtonElement>(null);
   const [profilePath, setProfilePath] = useState<string>("");
@@ -76,6 +78,10 @@ export function ProfileSetup() {
   };
 
   const handleSaveProfile = async () => {
+    // @ts-ignore
+    if (!(isWindow && window.__TAURI__)) {
+      return;
+    }
     const profilePath = await save({
       title: "Save Profile",
       filters: [
@@ -129,6 +135,10 @@ export function ProfileSetup() {
   };
 
   const handleLoadProfile = async () => {
+    // @ts-ignore
+    if (!(isWindow && window.__TAURI__)) {
+      return;
+    }
     const profilePath = await open({
       title: "Load Profile",
       filters: [
@@ -190,6 +200,10 @@ export function ProfileSetup() {
   };
 
   const handleQuickloadProfile = async (profilePath: string) => {
+    // @ts-ignore
+    if (!(isWindow && window.__TAURI__)) {
+      return;
+    }
     setProfilePath(profilePath);
 
     const rawData = await invoke("load_profile", {
@@ -251,7 +265,7 @@ export function ProfileSetup() {
               play/record flags
             </TooltipContent>
           </Tooltip>
-        </TooltipProvider>{" "}
+        </TooltipProvider>
       </Button>
       <PopoverContent className="mr-4 mt-6 w-80">
         <div className="grid gap-4">

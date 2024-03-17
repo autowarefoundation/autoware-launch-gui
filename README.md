@@ -10,7 +10,7 @@ Autoware Launch GUI is a Tauri / NextJS application designed to simplify the pro
   - [Installing Node.js](#installing-nodejs)
 - [Installation](#installation)
 - [Usage](#usage)
-- [WIP](#wip)
+- [WIP](#work-in-progress-wip)
 - [Contributing](#contributing)
 - [Author](#author)
 - [License](#license)

@@ -36,6 +36,8 @@ import {
   MenubarTrigger,
 } from "./ui/menubar";
 
+const isWindow = typeof window !== "undefined";
+
 export function Menu() {
   const [tab, setTab] = useAtom(tabAtom);
   const [isPlaying, _setIsPlaying] = useAtom(isBagPlayingAtom);
@@ -45,6 +47,10 @@ export function Menu() {
 
   const [isMaximized, setIsMaximized] = useState(false);
   useEffect(() => {
+    // @ts-ignore
+    if (!(isWindow && window.__TAURI__)) {
+      return;
+    }
     async function init() {
       const interval = setInterval(() => {
         Window.getCurrent()
@@ -67,21 +73,33 @@ export function Menu() {
         // metaKey is for MacOS (Command key)
         switch (e.key) {
           case "1":
+            e.preventDefault();
+            e.stopPropagation();
             setTab("launch");
             break;
           case "2":
+            e.preventDefault();
+            e.stopPropagation();
             setTab("rosbag");
             break;
           case "3":
+            e.preventDefault();
+            e.stopPropagation();
             setTab("topics");
             break;
           case "4":
+            e.preventDefault();
+            e.stopPropagation();
             setTab("publish");
             break;
           case "5":
+            e.preventDefault();
+            e.stopPropagation();
             setTab("service");
             break;
           case "Escape":
+            e.preventDefault();
+            e.stopPropagation();
             setTab("settings");
             break;
           case "`":
@@ -102,6 +120,10 @@ export function Menu() {
     };
   }, [setTab]);
 
+  if (!isWindow) {
+    return null;
+  }
+
   return (
     <WindowTitlebar
       controlsOrder="right"
@@ -111,6 +133,7 @@ export function Menu() {
         className: "w-fit opacity-0 pointer-events-none",
         disabled: true,
       }}
+      disabled
     >
       <Menubar className="border-0">
         <MenubarMenu>
@@ -120,17 +143,6 @@ export function Menu() {
             </Button>
           </MenubarTrigger>
           <MenubarContent className="flex flex-col gap-1">
-            <MenubarItem
-              className="flex items-center gap-2"
-              onClick={() => {
-                SSHDialogTriggerRef.current?.click();
-              }}
-            >
-              <Network className="h-4 w-4" />
-              <span className="font-mono text-xs">SSH connection</span>
-              <MenubarShortcut>CTRL+`</MenubarShortcut>
-            </MenubarItem>
-            <MenubarSeparator />
             <MenubarItem
               className="flex items-center gap-2"
               onClick={() => setTab("launch")}
@@ -179,35 +191,51 @@ export function Menu() {
             <MenubarItem
               className="flex items-center gap-2"
               onClick={() => {
-                aboutDialogTriggerRef.current?.click();
+                SSHDialogTriggerRef.current?.click();
               }}
             >
-              <Info className="h-4 w-4" />
-              <span className="font-mono text-xs">About</span>
+              <Network className="h-4 w-4" />
+              <span className="font-mono text-xs">SSH connection</span>
+              <MenubarShortcut>CTRL+`</MenubarShortcut>
             </MenubarItem>
-            <MenubarSeparator />
-            <MenubarItem
-              className="flex items-center gap-2"
-              onClick={async () => {
-                if (await Window.getCurrent().isMaximized()) {
-                  Window.getCurrent().unmaximize();
-                } else {
-                  Window.getCurrent().maximize();
-                }
-              }}
-            >
-              {isMaximized ? (
-                <>
-                  <Minimize2 className="h-4 w-4" />
-                  <span className="font-mono text-xs">Minimize</span>
-                </>
-              ) : (
-                <>
-                  <Maximize2 className="h-4 w-4" />
-                  <span className="font-mono text-xs">Maximize</span>
-                </>
-              )}
-            </MenubarItem>
+            {/* @ts-ignore */}
+            {isWindow && window.__TAURI__ && (
+              <>
+                <MenubarSeparator />
+                <MenubarItem
+                  className="flex items-center gap-2"
+                  onClick={() => {
+                    aboutDialogTriggerRef.current?.click();
+                  }}
+                >
+                  <Info className="h-4 w-4" />
+                  <span className="font-mono text-xs">About</span>
+                </MenubarItem>
+                <MenubarSeparator />
+                <MenubarItem
+                  className="flex items-center gap-2"
+                  onClick={async () => {
+                    if (await Window.getCurrent().isMaximized()) {
+                      Window.getCurrent().unmaximize();
+                    } else {
+                      Window.getCurrent().maximize();
+                    }
+                  }}
+                >
+                  {isMaximized ? (
+                    <>
+                      <Minimize2 className="h-4 w-4" />
+                      <span className="font-mono text-xs">Minimize</span>
+                    </>
+                  ) : (
+                    <>
+                      <Maximize2 className="h-4 w-4" />
+                      <span className="font-mono text-xs">Maximize</span>
+                    </>
+                  )}
+                </MenubarItem>
+              </>
+            )}
             <MenubarSeparator />
             <MenubarItem
               className="flex items-center gap-2"
@@ -219,19 +247,24 @@ export function Menu() {
               <span className="font-mono text-xs">Settings</span>
               <MenubarShortcut>CTRL+ESC</MenubarShortcut>
             </MenubarItem>
-            <MenubarSeparator />
-            <MenubarItem
-              className="flex items-center gap-2"
-              onClick={async () => {
-                await invoke("kill_autoware_process", {});
+            {/* @ts-ignore */}
+            {isWindow && window.__TAURI__ && (
+              <>
+                <MenubarSeparator />
+                <MenubarItem
+                  className="flex items-center gap-2"
+                  onClick={async () => {
+                    await invoke("kill_autoware_process", {});
 
-                await Window.getCurrent().destroy();
-              }}
-            >
-              <X className="h-4 w-4" />
-              <span className="font-mono text-xs">Quit</span>
-              <MenubarShortcut>CTRL+Q</MenubarShortcut>
-            </MenubarItem>
+                    await Window.getCurrent().destroy();
+                  }}
+                >
+                  <X className="h-4 w-4" />
+                  <span className="font-mono text-xs">Quit</span>
+                  <MenubarShortcut>CTRL+Q</MenubarShortcut>
+                </MenubarItem>
+              </>
+            )}
           </MenubarContent>
         </MenubarMenu>
       </Menubar>

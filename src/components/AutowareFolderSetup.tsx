@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { open } from "@tauri-apps/plugin-dialog";
 import { useAtom } from "jotai";
 
@@ -23,6 +23,8 @@ import {
   TooltipTrigger,
 } from "./ui/tooltip";
 
+const isWindow = typeof window !== undefined;
+
 const AutowareFolderSetup = () => {
   const [autowareFolderPath, setAutowareFolderPath] = useAtom(
     autowareFolderPathAtom
@@ -30,6 +32,41 @@ const AutowareFolderSetup = () => {
   const [lastUsedFolders, setLastUsedFolders] = useAtom(
     lastUsedAutowareFoldersAtom
   );
+  const [socket, setSocket] = useState<WebSocket | null>(null);
+
+  useEffect(() => {
+    let ws: WebSocket;
+    if (isWindow) {
+      ws = new WebSocket("ws://localhost:42068/ws");
+      ws.onopen = () => {
+        console.log("connected to app/browser syncing websocket");
+
+        // @ts-ignore
+        if (window.__TAURI__) {
+          ws.send("Tauri-FolderSetup");
+        } else {
+          ws.send("Browser-FolderSetup");
+          if (!autowareFolderPath) {
+            ws.send(JSON.stringify({ autowareFolderPath: autowareFolderPath }));
+          }
+        }
+      };
+      ws.onclose = () => {
+        console.log("connection to app/browser syncing websocket closed");
+      };
+      ws.onerror = (e) => {
+        console.log("error from websocket", e);
+      };
+
+      setSocket(ws);
+    }
+
+    return () => {
+      if (ws) {
+        ws.close();
+      }
+    };
+  }, [autowareFolderPath]);
 
   const triggerRef = useRef<HTMLButtonElement>(null);
 
@@ -39,7 +76,22 @@ const AutowareFolderSetup = () => {
 
   const quickSetPath = (path: string) => {
     setAutowareFolderPath(path);
+    updateBrowser(path);
   };
+  // need to confirm if autowarefolder has been set
+  const updateBrowser = useCallback(
+    (autowareFolder: string) => {
+      // @ts-ignore
+      if (window.__TAURI__ && socket) {
+        socket.send(
+          JSON.stringify({
+            autowareFolderPath: autowareFolder,
+          })
+        );
+      }
+    },
+    [socket]
+  );
 
   return (
     <Popover>
@@ -50,6 +102,8 @@ const AutowareFolderSetup = () => {
               onClick={handleTriggerPopover}
               className="w-40 text-left underline underline-offset-1"
               variant={autowareFolderPath ? "ghost" : "default"}
+              // @ts-ignore
+              disabled={window.__TAURI__ ? false : true}
             >
               <span className="truncate font-mono">
                 {autowareFolderPath
@@ -92,6 +146,10 @@ const AutowareFolderSetup = () => {
           <div className="flex items-center gap-2">
             <Button
               onClick={async () => {
+                // @ts-ignore
+                if (!(isWindow && window.__TAURI__)) {
+                  return;
+                }
                 const folder = await open({
                   directory: true,
                   multiple: false,
@@ -99,10 +157,11 @@ const AutowareFolderSetup = () => {
                     "Select Autoware Root Folder [eg. /home/user/autoware]",
                 });
                 if (!folder) return;
-                setAutowareFolderPath(folder as string);
+                setAutowareFolderPath(folder);
+                updateBrowser(folder);
                 setLastUsedFolders((prev) => {
-                  if (!prev.includes(folder as string)) {
-                    return [folder as string, ...prev];
+                  if (!prev.includes(folder)) {
+                    return [folder, ...prev];
                   }
                   return prev;
                 });

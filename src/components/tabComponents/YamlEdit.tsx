@@ -4,12 +4,17 @@ import React from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { useAtom } from "jotai";
 
-import { autowareFolderPathAtom } from "@/app/jotai/atoms";
+import {
+  autowareFolderPathAtom,
+  parsedConfigFolderStructureAtom,
+} from "@/app/jotai/atoms";
 
 import { YamlArgsDialog } from "../DialogYamlParser";
 import { DropDownYaml } from "../DropDownYaml";
 
 export type FolderStructure = { [key: string]: FolderStructure | string[] };
+
+const isWindow = typeof window !== "undefined";
 
 function generateFolderStructure(paths: string[]): FolderStructure {
   const root: FolderStructure = {};
@@ -64,11 +69,16 @@ const YAMLEdit = () => {
   } | null>(null);
   const [parsedConfigPath, setParsedConfigPath] = React.useState<string>("");
 
-  const [parsedConfigFolderStructure, setParsedConfigFolderStructure] =
-    React.useState<FolderStructure | null>(null);
+  const [parsedConfigFolderStructure, setParsedConfigFolderStructure] = useAtom(
+    parsedConfigFolderStructureAtom
+  );
 
   const configFolderPath = `${autowareFolderPath}/src/launcher/autoware_launch/autoware_launch/config`;
   const findConfigFiles = async () => {
+    // @ts-ignore
+    if (!(isWindow && window.__TAURI__)) {
+      return;
+    }
     const res: string[] = await invoke("find_yaml_files", {
       path: configFolderPath,
     });
@@ -77,6 +87,10 @@ const YAMLEdit = () => {
   };
 
   const handleParseConfig = async (path: string) => {
+    // @ts-ignore
+    if (!(isWindow && window.__TAURI__)) {
+      return;
+    }
     const absolutePath = `${configFolderPath.replace(/\/config$/, "")}/${path}`;
 
     setParsedConfig(null);

@@ -52,6 +52,8 @@ const EMPTY_TOPIC: TopicsAndTypes = {
   type: "",
 };
 
+const isWindow = typeof window !== "undefined";
+
 export function formatForRos2Pub(input: string): string {
   const lines = input.split("\n");
   let result = "";
@@ -128,6 +130,10 @@ const TopicPublish = () => {
   };
 
   const getMessageTypesAvailable = async () => {
+    // @ts-ignore
+    if (!(isWindow && window.__TAURI__)) {
+      return;
+    }
     const messageTypes = (await invoke("find_all_ros_message_types", {
       autowarePath,
       extraWorkspaces: extraWorkspacePaths,
@@ -144,6 +150,10 @@ const TopicPublish = () => {
   };
 
   const getTopics = async () => {
+    // @ts-ignore
+    if (!(isWindow && window.__TAURI__)) {
+      return;
+    }
     const topicsWithTypes = (await invoke("get_topics", {})) as string[];
     const topicsAndTypes = topicsWithTypes.map((topicWithType) => {
       const [topic, type] = topicWithType.split(" ");
@@ -154,6 +164,10 @@ const TopicPublish = () => {
   };
 
   const getMessageInterface = async (messageType: string) => {
+    // @ts-ignore
+    if (!(isWindow && window.__TAURI__)) {
+      return;
+    }
     try {
       const messageInterface = (await invoke("get_message_interface", {
         messageType: messageType,
@@ -168,6 +182,10 @@ const TopicPublish = () => {
   };
 
   const publishMessage = async () => {
+    // @ts-ignore
+    if (!(isWindow && window.__TAURI__)) {
+      return;
+    }
     const flattenedMessageWithNoExtraLines =
       textAreaRef.current!.value.replaceAll("\n", " ");
     await invoke("publish_message", {
@@ -183,6 +201,10 @@ const TopicPublish = () => {
   };
 
   const killPublishNode = async () => {
+    // @ts-ignore
+    if (!(isWindow && window.__TAURI__)) {
+      return;
+    }
     await invoke("kill_topic_pub", {});
     setPublishOutput((prev) => [...prev, `Killed topic publisher`]);
   };
@@ -190,6 +212,10 @@ const TopicPublish = () => {
   useEffect(() => {
     getTopics();
     getMessageTypesAvailable();
+    // @ts-ignore
+    if (!(isWindow && window.__TAURI__)) {
+      return;
+    }
     async function getPublishOutput() {
       const unlistenTopicPubOutput = await listen<string>(
         "ros2-topic-pub-output",

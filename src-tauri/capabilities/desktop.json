@@ -43,10 +43,8 @@
       ]
     },
     "app:allow-name",
-    "app:allow-name",
     "app:allow-tauri-version",
     "app:allow-version",
-    "window:allow-internal-on-mousemove",
     "dialog:allow-open",
     "dialog:allow-save",
     "webview:allow-internal-toggle-devtools",

@@ -35,6 +35,8 @@ interface InitialValues {
   double: { [key: string]: number };
 }
 
+const isWindow = typeof window !== "undefined";
+
 export function YamlArgsDialog({
   path,
   yamlData: initialYamlData,
@@ -208,6 +210,10 @@ export function YamlArgsDialog({
   };
 
   const removeItem = async (fullKey: string, index: number) => {
+    // @ts-ignore
+    if (!(isWindow && window.__TAURI__)) {
+      return;
+    }
     // prepend the key with /**.ros__parameters
     const absFullKey = `/**.ros__parameters.${fullKey}`;
     const keys = absFullKey.split(".");
@@ -298,6 +304,10 @@ export function YamlArgsDialog({
 
   const handleEdit = useCallback(
     async (key: string) => {
+      // @ts-ignore
+      if (!(isWindow && window.__TAURI__)) {
+        return;
+      }
       const basePath = "/**.ros__parameters";
       const fullKeyPath = `${basePath}.${key}`;
 

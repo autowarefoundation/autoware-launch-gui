@@ -15,7 +15,13 @@ import {
   DialogTitle,
 } from "./ui/dialog";
 
+const isWindow = typeof window !== undefined;
+
 const checkForUpdates = async () => {
+  // @ts-ignore
+  if (!(isWindow && window.__TAURI__)) {
+    return;
+  }
   const { open } = await import("@tauri-apps/plugin-shell");
 
   return open(
@@ -30,6 +36,10 @@ export function AboutDialog() {
   const [arc, setArc] = useState("");
 
   const getInfos = useCallback(async () => {
+    // @ts-ignore
+    if (!(isWindow && window.__TAURI__)) {
+      return;
+    }
     const { arch } = await import("@tauri-apps/plugin-os");
 
     getName && getName().then((x) => setName(x));
@@ -38,9 +48,13 @@ export function AboutDialog() {
     arch && arch().then((x) => setArc(x));
   }, []);
 
-  if (typeof window !== "undefined") getInfos();
+  if (isWindow) getInfos();
 
   const open = useCallback(async (url: string) => {
+    // @ts-ignore
+    if (!(isWindow && window.__TAURI__)) {
+      return;
+    }
     const { open } = await import("@tauri-apps/plugin-shell");
     open && open(url);
   }, []);

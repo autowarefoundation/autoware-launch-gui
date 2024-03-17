@@ -23,6 +23,8 @@ import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { useToast } from "./ui/use-toast";
 
+const isWindow = typeof window !== "undefined";
+
 export default function SSHComponent() {
   const [host, setHost] = useAtom(sshHostAtom);
   const [user, setUser] = useAtom(sshUsernameAtom);
@@ -45,6 +47,10 @@ export default function SSHComponent() {
   const { toast } = useToast();
 
   const connectSSH = async () => {
+    // @ts-ignore
+    if (!(isWindow && window.__TAURI__)) {
+      return;
+    }
     try {
       setIsLoading(true);
       // First, try to establish an SSH connection
@@ -108,6 +114,10 @@ export default function SSHComponent() {
   // };
 
   const disconnectSSH = async () => {
+    // @ts-ignore
+    if (!(isWindow && window.__TAURI__)) {
+      return;
+    }
     try {
       const response = await invoke("kill_ssh_connection", {});
       setIsConnected(false);

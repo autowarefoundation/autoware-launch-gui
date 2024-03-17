@@ -2,6 +2,7 @@ import { atom } from "jotai";
 import { atomWithStorage } from "jotai/utils";
 
 import { bagFileInfoType } from "@/components/tabComponents/RosbagPlayer";
+import { FolderStructure } from "@/components/tabComponents/YamlEdit";
 import { ElementData } from "@/components/Tree";
 
 type FileResponse = {
@@ -24,6 +25,12 @@ export type TopicsAndTypes = {
 export type GroupedTopics = {
   [key: string]: TopicsAndTypes[];
 };
+
+export const parsedConfigFolderStructureAtom =
+  atomWithStorage<FolderStructure | null>(
+    "parsedConfigFolderStructureLaunchGUI",
+    null
+  );
 
 export const tabAtom = atom<
   "launch" | "rosbag" | "topics" | "publish" | "service" | "settings"

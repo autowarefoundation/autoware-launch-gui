@@ -35,10 +35,13 @@ import {
   SelectValue,
 } from "./ui/select";
 import { Tabs, TabsList, TabsTrigger } from "./ui/tabs";
+import { isJSONParsable } from "./WebSocket";
 
 interface AutowareLaunchDialog extends React.HTMLAttributes<HTMLDivElement> {}
 
 const tabTitles = ["ALL", "INFO", "WARN", "ERROR", "DEBUG", "COMPONENT"];
+
+const isWindow = typeof window !== "undefined";
 
 export function AutowareLaunchDialog(props: AutowareLaunchDialog) {
   const logDivRef = useRef<HTMLDivElement>(null);
@@ -62,6 +65,10 @@ export function AutowareLaunchDialog(props: AutowareLaunchDialog) {
   }, []);
 
   useEffect(() => {
+    // @ts-ignore
+    if (!(isWindow && window.__TAURI__)) {
+      return;
+    }
     async function init() {
       // list out the folder names inside of the install folder inside of the autoware folder
       const folders: string[] = await invoke("autoware_installed_packages", {
@@ -93,28 +100,24 @@ export function AutowareLaunchDialog(props: AutowareLaunchDialog) {
 
           // Check for "ERROR" logs
           if (logs.includes("ERROR")) {
-            console.log("WE HAVE AN ERROR");
             handleLogUpdate(setLaunchLogsAll);
             handleLogUpdate(setLaunchLogsError);
           }
 
           // Check for "WARN" logs
           if (logs.includes("WARN")) {
-            console.log("WE HAVE A WARNING");
             handleLogUpdate(setLaunchLogsAll);
             handleLogUpdate(setLaunchLogsWarn);
           }
 
           // Check for "DEBUG" logs
           if (logs.includes("DEBUG")) {
-            console.log("WE HAVE A DEBUG LOG");
             handleLogUpdate(setLaunchLogsAll);
             handleLogUpdate(setLaunchLogsDebug);
           }
 
           // Check for "INFO" logs
           if (logs.includes("INFO")) {
-            console.log("WE HAVE AN INFO LOG");
             handleLogUpdate(setLaunchLogsAll);
             handleLogUpdate(setLaunchLogsInfo);
           }

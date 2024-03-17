@@ -15,6 +15,8 @@ import { ModeToggle } from "../mode-toggle";
 import { Button } from "../ui/button";
 import { Label } from "../ui/label";
 
+const isWindow = typeof window !== undefined;
+
 const Settings = () => {
   const [autowareFolderPath, setAutowareFolderPath] = useAtom(
     autowareFolderPathAtom
@@ -25,13 +27,16 @@ const Settings = () => {
   );
 
   const addWorkspace = async () => {
+    // @ts-ignore
+    if (!(isWindow && window.__TAURI__)) {
+      return;
+    }
     const { open } = await import("@tauri-apps/plugin-dialog");
 
     const result = await open({
       directory: true,
       multiple: false,
     });
-    console.log(result);
     if (result) {
       setExtraWorkspaces((currentWorkspaces) => {
         // without the use of a set, let's skip duplicates
@@ -50,6 +55,10 @@ const Settings = () => {
   const [isAutostartEnabled, setIsAutostartEnabled] = useState<boolean>(false);
 
   const toggleAutostart = async () => {
+    // @ts-ignore
+    if (!(isWindow && window.__TAURI__)) {
+      return;
+    }
     if (await isEnabled()) {
       await disable();
       setIsAutostartEnabled(false);
@@ -60,6 +69,10 @@ const Settings = () => {
   };
 
   useEffect(() => {
+    // @ts-ignore
+    if (!(isWindow && window.__TAURI__)) {
+      return;
+    }
     (async () => {
       setIsAutostartEnabled(await isEnabled());
     })();
@@ -135,21 +148,24 @@ const Settings = () => {
           </Label>
           <ModeToggle />
         </div>
-        <div className="flex items-center gap-2">
-          <Label className="text-xs font-semibold text-foreground">
-            Autostart:
-          </Label>
-          <Button
-            className="flex flex-row items-center gap-2 rounded-md p-2 font-mono text-muted-foreground hover:bg-foreground hover:bg-opacity-10 hover:text-background"
-            onClick={toggleAutostart}
-            variant="outline"
-          >
-            <Rewind className="h-4 w-4 fill-current" />
-            <Label className="text-sm font-semibold">
-              {isAutostartEnabled ? "Disable" : "Enable"}
+        {/*  @ts-ignore */}
+        {isWindow && window.__TAURI__ && (
+          <div className="flex items-center gap-2">
+            <Label className="text-xs font-semibold text-foreground">
+              Autostart:
             </Label>
-          </Button>
-        </div>
+            <Button
+              className="flex flex-row items-center gap-2 rounded-md p-2 font-mono text-muted-foreground hover:bg-foreground hover:bg-opacity-10 hover:text-background"
+              onClick={toggleAutostart}
+              variant="outline"
+            >
+              <Rewind className="h-4 w-4 fill-current" />
+              <Label className="text-sm font-semibold">
+                {isAutostartEnabled ? "Disable" : "Enable"}
+              </Label>
+            </Button>
+          </div>
+        )}
       </div>
     </div>
   );
