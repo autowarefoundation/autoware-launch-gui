@@ -4,9 +4,18 @@
 )]
 
 use std::sync::{Arc, Mutex};
+use tauri::Manager;
+
 mod components; // Import all the components
 mod handlers;
 mod setup;
+
+#[derive(Clone, serde::Serialize)]
+struct Payload {
+    args: Vec<String>,
+    cwd: String,
+}
+
 #[tokio::main]
 async fn main() {
     let flag = Arc::new(Mutex::new(false));
@@ -26,6 +35,12 @@ async fn main() {
             tauri_plugin_autostart::MacosLauncher::LaunchAgent,
             Some(["--hidden"].to_vec()),
         ))
+        .plugin(tauri_plugin_single_instance::init(|app, argv, cwd| {
+            println!("You are trying to open a new instance with these args: {:?} and cwd: {:?}, but an instance is already running. Ignoring.", argv, cwd);
+
+            app.emit("single-instance", Payload { args: argv, cwd })
+                .unwrap();
+        }))
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
