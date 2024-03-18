@@ -2,7 +2,7 @@
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
-import { listen } from "@tauri-apps/api/event";
+import { emit, listen, once } from "@tauri-apps/api/event";
 import { Window } from "@tauri-apps/api/window";
 import { open } from "@tauri-apps/plugin-dialog";
 import { useAtom } from "jotai";
@@ -45,7 +45,55 @@ const Launch = () => {
   const [_launchFilePath, _setLaunchFilePath] = useAtom(
     parsedLaunchFilePathAtom
   );
+
+  const [parsedFilePath, setParsedFilePath] = useAtom(parsedLaunchFilePathAtom);
+  const [launchFilePath, setLaunchFilePath] = useState(
+    parsedFilePath?.split("/").pop()
+  );
+
+  useEffect(() => {
+    setLaunchFilePath(parsedFilePath?.split("/").pop());
+  }, [parsedFilePath]);
+
+  const [editableCommand, setEditableCommand] = useState(
+    `ros2 launch autoware_launch ${launchFilePath}`
+  );
+  const [selectedArgs, setSelectedArgs] = useAtom(selectedLaunchArgsAtom);
+  const [userEditedArgs, setUserEditedArgs] = useAtom(userEditedArgsAtom);
+
+  const [autowarePath] = useAtom(autowareFolderPathAtom);
+  const [extraWorkspacePaths] = useAtom(multipleWorkspacePathsAtom);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  const [autowareProcessesNames, _setAutowareProcessesNames] = useAtom(
+    autowareProcessesAtom
+  );
+
+  const [parsedLaunchFile, _] = useAtom(parsedLaunchFilesAtom);
+  const [_launchLogsAll, setLaunchLogsAll] = useAtom(launchLogsAllAtom);
+  const [_launchLogsInfo, setLaunchLogsInfo] = useAtom(launchLogsInfoAtom);
+  const [_launchLogsWarn, setLaunchLogsWarn] = useAtom(launchLogsWarnAtom);
+  const [_launchLogsError, setLaunchLogsError] = useAtom(launchLogsErrorAtom);
+  const [_launchLogsDebug, setLaunchLogsDebug] = useAtom(launchLogsDebugAtom);
+  const [_launchLogsComponent, setLaunchLogsComponent] = useAtom(
+    launchLogsComponentAtom
+  );
+
+  const [host, _setHost] = useAtom(sshHostAtom);
+  const [user, _setUser] = useAtom(sshUsernameAtom);
+  const [isSSHConnected, _setIsConnected] = useAtom(sshIsConnectedAtom);
+  const [autowareLaunchedInSSH, setAutowareLaunchedInSSH] = useState(false);
+
+  // get all the arguments from the tree
+  const args: {
+    arg: string;
+    value: string;
+  }[] = [];
+
   const { toast } = useToast();
+  useEffect(() => {
+    setEditableCommand(`ros2 launch autoware_launch ${launchFilePath}`);
+  }, [launchFilePath]);
 
   useEffect(() => {
     async function init() {
@@ -116,40 +164,37 @@ const Launch = () => {
         unlistenPackageNotFound();
       };
     }
-
     init();
   }, []);
 
-  const [parsedFilePath, setParsedFilePath] = useAtom(parsedLaunchFilePathAtom);
-  const [launchFilePath, setLaunchFilePath] = useState(
-    parsedFilePath?.split("/").pop()
-  );
-
   useEffect(() => {
-    setLaunchFilePath(parsedFilePath?.split("/").pop());
-  }, [parsedFilePath]);
+    async function init() {
+      const unlistenStartAutowareOnAppStart = await listen<boolean>(
+        "start_autoware_on_app_start",
+        async (msg) => {
+          await handleLaunchAutoware();
+        },
+        {
+          target: "main",
+        }
+      );
 
-  const [editableCommand, setEditableCommand] = useState(
-    `ros2 launch autoware_launch ${launchFilePath}`
-  );
-  const [selectedArgs, setSelectedArgs] = useAtom(selectedLaunchArgsAtom);
-  const [userEditedArgs, setUserEditedArgs] = useAtom(userEditedArgsAtom);
-
-  const [autowarePath] = useAtom(autowareFolderPathAtom);
-  const [extraWorkspacePaths] = useAtom(multipleWorkspacePathsAtom);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
-
-  const [autowareProcessesNames, _setAutowareProcessesNames] = useAtom(
-    autowareProcessesAtom
-  );
-
-  const [parsedLaunchFile, _] = useAtom(parsedLaunchFilesAtom);
-
-  // get all the arguments from the tree
-  const args: {
-    arg: string;
-    value: string;
-  }[] = [];
+      const unlistenKillAutowareThroughTray = await listen<boolean>(
+        "kill_autoware_through_tray",
+        async (msg) => {
+          await invoke("kill_autoware_process", {});
+        },
+        {
+          target: "main",
+        }
+      );
+      return () => {
+        unlistenKillAutowareThroughTray();
+        unlistenStartAutowareOnAppStart();
+      };
+    }
+    if (autowarePath && launchFilePath) init();
+  }, [autowarePath, launchFilePath]);
 
   const walkTreeItems = (items: ElementData[] | ElementData) => {
     if (items instanceof Array) {
@@ -178,10 +223,6 @@ const Launch = () => {
   };
 
   walkTreeItems(elements);
-
-  useEffect(() => {
-    setEditableCommand(`ros2 launch autoware_launch ${launchFilePath}`);
-  }, [launchFilePath]);
 
   const handleArgSelectChange = React.useCallback(
     (arg: { arg: string; value: string }) => {
@@ -300,19 +341,6 @@ const Launch = () => {
   //   }
   //   setUserEditedArgs(argsFromCommand);
   // }, [editableCommand]);
-
-  const [_launchLogsAll, setLaunchLogsAll] = useAtom(launchLogsAllAtom);
-  const [_launchLogsInfo, setLaunchLogsInfo] = useAtom(launchLogsInfoAtom);
-  const [_launchLogsWarn, setLaunchLogsWarn] = useAtom(launchLogsWarnAtom);
-  const [_launchLogsError, setLaunchLogsError] = useAtom(launchLogsErrorAtom);
-  const [_launchLogsDebug, setLaunchLogsDebug] = useAtom(launchLogsDebugAtom);
-  const [_launchLogsComponent, setLaunchLogsComponent] = useAtom(
-    launchLogsComponentAtom
-  );
-
-  const [host, _setHost] = useAtom(sshHostAtom);
-  const [user, _setUser] = useAtom(sshUsernameAtom);
-  const [isSSHConnected, _setIsConnected] = useAtom(sshIsConnectedAtom);
 
   const handleLaunchAutoware = useCallback(async () => {
     if (!autowarePath) {
@@ -486,8 +514,6 @@ const Launch = () => {
     setParsedFilePath(file.path);
     setUserEditedArgs([]);
   }, [autowarePath]);
-
-  const [autowareLaunchedInSSH, setAutowareLaunchedInSSH] = useState(false);
 
   return (
     <div className="flex h-full w-full flex-col gap-4">
