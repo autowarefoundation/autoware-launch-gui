@@ -472,13 +472,17 @@ const Launch = () => {
         }
         return;
       } else if (mapFileAttributesValuesFound.length === 1) {
-        if (!mapPathContentFiles.some((file) => file.endsWith(".pcd"))) {
+        if (
+          !mapPathContentFiles.some((file) => file && file.endsWith(".pcd"))
+        ) {
           toast({
             variant: "destructive",
             title: "Error",
             description: `The "pointcloud_map" file was not found in the map_path directory`,
           });
-        } else if (!mapPathContentFiles.some((file) => file.endsWith(".osm"))) {
+        } else if (
+          !mapPathContentFiles.some((file) => file && file.endsWith(".osm"))
+        ) {
           toast({
             variant: "destructive",
             title: "Error",
@@ -493,8 +497,10 @@ const Launch = () => {
         }
       } else {
         if (
-          mapFileAttributesValues.some((file) => file.endsWith(".osm")) ||
-          mapFileAttributesValues.some((file) => file.endsWith(".pcd"))
+          mapFileAttributesValues.some(
+            (file) => file && file.endsWith(".osm")
+          ) ||
+          mapFileAttributesValues.some((file) => file && file.endsWith(".pcd"))
         ) {
           toast({
             variant: "destructive",
