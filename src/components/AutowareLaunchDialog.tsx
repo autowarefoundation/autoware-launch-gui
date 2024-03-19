@@ -1,10 +1,12 @@
 "use client";
 
 import { memo, useCallback, useEffect, useRef, useState } from "react";
+import { useVirtualizer } from "@tanstack/react-virtual";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
-import { useAtom } from "jotai";
+import { SetStateAction, useAtom } from "jotai";
 
+import { cn } from "@/lib/utils";
 import {
   Dialog,
   DialogContent,
@@ -35,6 +37,8 @@ import {
   SelectValue,
 } from "./ui/select";
 import { Tabs, TabsList, TabsTrigger } from "./ui/tabs";
+
+type SetAtom<Args extends any[], Result> = (...args: Args) => Result;
 
 interface AutowareLaunchDialog extends React.HTMLAttributes<HTMLDivElement> {}
 
@@ -77,15 +81,17 @@ export function AutowareLaunchDialog(props: AutowareLaunchDialog) {
           const logs = data.payload as string;
 
           // Helper function to handle log updates using Sets
-          const handleLogUpdate = (setLogState: any) => {
-            setLogState((prevArray: string[]) => {
+          const handleLogUpdate = (
+            setLogState: SetAtom<[SetStateAction<string[]>], void>
+          ) => {
+            setLogState((prevArray) => {
               // Deep clone the previous array
               const clonedPrevArray = JSON.parse(JSON.stringify(prevArray));
 
-              const newSet = new Set(clonedPrevArray);
+              const newSet = new Set<string>(clonedPrevArray);
               newSet.add(logs);
-              if (newSet.size > 100) {
-                return [...newSet].slice(-50);
+              if (newSet.size > 10000) {
+                return [...newSet].slice(-1000);
               }
               return [...newSet];
             });
@@ -93,28 +99,28 @@ export function AutowareLaunchDialog(props: AutowareLaunchDialog) {
 
           // Check for "ERROR" logs
           if (logs.includes("ERROR")) {
-            console.log("WE HAVE AN ERROR");
+            // console.log("WE HAVE AN ERROR");
             handleLogUpdate(setLaunchLogsAll);
             handleLogUpdate(setLaunchLogsError);
           }
 
           // Check for "WARN" logs
           if (logs.includes("WARN")) {
-            console.log("WE HAVE A WARNING");
+            // console.log("WE HAVE A WARNING");
             handleLogUpdate(setLaunchLogsAll);
             handleLogUpdate(setLaunchLogsWarn);
           }
 
           // Check for "DEBUG" logs
           if (logs.includes("DEBUG")) {
-            console.log("WE HAVE A DEBUG LOG");
+            // console.log("WE HAVE A DEBUG LOG");
             handleLogUpdate(setLaunchLogsAll);
             handleLogUpdate(setLaunchLogsDebug);
           }
 
           // Check for "INFO" logs
           if (logs.includes("INFO")) {
-            console.log("WE HAVE AN INFO LOG");
+            // console.log("WE HAVE AN INFO LOG");
             handleLogUpdate(setLaunchLogsAll);
             handleLogUpdate(setLaunchLogsInfo);
           }
@@ -130,8 +136,8 @@ export function AutowareLaunchDialog(props: AutowareLaunchDialog) {
               if (index !== -1) {
                 const updatedLogs = new Set(newLogs[index].logs);
                 updatedLogs.add(logs);
-                if (updatedLogs.size > 100) {
-                  newLogs[index].logs = [...updatedLogs].slice(-50);
+                if (updatedLogs.size > 10000) {
+                  newLogs[index].logs = [...updatedLogs].slice(-1000);
                 } else {
                   newLogs[index].logs = [...updatedLogs];
                 }
@@ -177,6 +183,47 @@ export function AutowareLaunchDialog(props: AutowareLaunchDialog) {
     );
   }
 
+  function getLogsForCurrentTab() {
+    switch (currentTab) {
+      case "all":
+        return filterLogs(launchLogsAll);
+      case "info":
+        return filterLogs(launchLogsInfo);
+      case "warn":
+        return filterLogs(launchLogsWarn);
+      case "error":
+        return filterLogs(launchLogsError);
+      case "debug":
+        return filterLogs(launchLogsDebug);
+      case "component":
+        const componentLogs = launchLogsComponent.find(
+          (logObj) => logObj.name === selectedPackage
+        );
+        return componentLogs ? filterLogs(componentLogs.logs) : [];
+      default:
+        return [];
+    }
+  }
+  const logsToDisplay = getLogsForCurrentTab();
+  useEffect(() => {
+    console.log(logsToDisplay.length);
+  }, [logsToDisplay.length]);
+
+  const rowVirtualizer = useVirtualizer({
+    count: logsToDisplay.length,
+    getScrollElement: () => logDivRef.current!,
+    estimateSize: useCallback(() => 30, []),
+    overscan: 5,
+  });
+
+  useEffect(() => {
+    // scroll to the bottom of the logs
+    logDivRef.current?.scrollTo({
+      top: logDivRef.current?.scrollHeight,
+      behavior: "smooth",
+    });
+  }, [logsToDisplay]);
+
   return (
     <Dialog>
       <DialogTrigger>
@@ -194,10 +241,7 @@ export function AutowareLaunchDialog(props: AutowareLaunchDialog) {
       </DialogTrigger>
       <DialogContent className="flex h-[720px] max-w-[600px] flex-col items-center">
         <DialogTitle>Autoware Launch Logs</DialogTitle>
-        <div
-          ref={logDivRef}
-          className="relative flex h-full w-full flex-col overflow-y-auto rounded-lg"
-        >
+        <div className="relative flex h-full w-full flex-col rounded-lg">
           <Tabs
             defaultValue="all"
             className="flex w-full flex-col gap-2"
@@ -228,79 +272,41 @@ export function AutowareLaunchDialog(props: AutowareLaunchDialog) {
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             )}
-            <div className="fixed left-0 top-28 flex max-h-[calc(100%-8rem)] w-full flex-col gap-4 overflow-y-auto break-words p-4">
-              {currentTab === "all" &&
-                filterLogs(launchLogsAll).map((log, index) => (
-                  <div
-                    key={index}
-                    className={`${
-                      log.includes("ERROR")
+            <div
+              ref={logDivRef}
+              className="fixed left-0 top-28 flex h-[calc(100%-8rem)] max-h-[calc(100%-8rem)] w-full flex-col gap-4 overflow-y-auto break-words p-4"
+            >
+              {rowVirtualizer.getVirtualItems().map((log) => (
+                <div
+                  key={log.key}
+                  style={{
+                    position: "relative",
+                    top: 0,
+                    left: 0,
+                    width: "100%",
+                    // Adjust height if your log items have variable sizes
+                    height: rowVirtualizer.getTotalSize(),
+                    transform: `translateY(${log.start}px)`,
+                  }}
+                  className={cn(
+                    "break-words p-2 font-mono ",
+                    `${
+                      logsToDisplay[log.index].includes("ERROR")
                         ? "text-red-500"
-                        : log.includes("WARN")
+                        : logsToDisplay[log.index].includes("WARN")
                         ? "text-yellow-500"
-                        : log.includes("DEBUG")
+                        : logsToDisplay[log.index].includes("DEBUG")
                         ? "text-emerald-500"
-                        : log.includes("INFO")
+                        : logsToDisplay[log.index].includes("INFO")
                         ? "text-violet-300"
                         : ""
-                    }`}
-                  >
-                    {highlightSearchQuery(log, searchQuery)}
-                  </div>
-                ))}
-              {currentTab === "info" &&
-                filterLogs(launchLogsInfo).map((log, index) => (
-                  <div key={index} className="">
-                    {highlightSearchQuery(log, searchQuery)}
-                  </div>
-                ))}
-              {currentTab === "warn" &&
-                filterLogs(launchLogsWarn).map((log, index) => (
-                  <div key={index} className="text-yellow-500">
-                    {highlightSearchQuery(log, searchQuery)}
-                  </div>
-                ))}
-              {currentTab === "error" &&
-                filterLogs(launchLogsError).map((log, index) => (
-                  <div key={index} className="text-red-500">
-                    {highlightSearchQuery(log, searchQuery)}
-                  </div>
-                ))}
-              {currentTab === "debug" &&
-                filterLogs(launchLogsDebug).map((log, index) => (
-                  <div key={index} className="text-emerald-500">
-                    {highlightSearchQuery(log, searchQuery)}
-                  </div>
-                ))}
-              {currentTab === "component" && (
-                <div className="flex flex-col overflow-y-auto break-words p-4">
-                  {/* Display logs for the selected package */}
-                  {launchLogsComponent
-                    .filter((logObj) => logObj.name === selectedPackage)
-                    .map((logObj, index) => (
-                      <div key={index}>
-                        {logObj.logs.map((log, logIndex) => {
-                          let logClass = "";
-                          if (log.includes("ERROR")) {
-                            logClass = "text-red-500";
-                          } else if (log.includes("WARN")) {
-                            logClass = "text-yellow-500";
-                          } else if (log.includes("DEBUG")) {
-                            logClass = "text-emerald-500";
-                          } else if (log.includes("INFO")) {
-                            logClass = "";
-                          }
-
-                          return (
-                            <div key={logIndex} className={logClass}>
-                              {log}
-                            </div>
-                          );
-                        })}
-                      </div>
-                    ))}
+                    }`
+                  )}
+                >
+                  {/* Render your log entry here */}
+                  {highlightSearchQuery(logsToDisplay[log.index], searchQuery)}
                 </div>
-              )}
+              ))}
             </div>
           </Tabs>
         </div>
